@@ -3,19 +3,23 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
 using RabbitMQ.Client;
+using Resto.Front.Api.Data.Orders;
 
 namespace alivery
 {
-    class MessageQueue
+    class MessageQueue:IDisposable
     {
         private readonly MessageQueueConfiguration config;
+        private readonly IRepository<OrderStatusMessage> messagesRepository;
         IModel channel;
         string queueName;
 
-        public MessageQueue(MessageQueueConfiguration configuration)
+        public MessageQueue(MessageQueueConfiguration configuration, IRepository<OrderStatusMessage> messagesRepository)
         {
             this.config = configuration;
+            this.messagesRepository = messagesRepository;
         }
 
 
@@ -43,21 +47,34 @@ namespace alivery
         {
             channel.Dispose();
         }
-        //        string message = "Hello World!";
-        public void Send(string message)
+
+        public void Send(IOrder order)
         {
-            
-                
+                var oderId = order.Id.ToString();
 
-                var body = Encoding.UTF8.GetBytes(message);
+                string message = JsonConvert.SerializeObject(order);
 
-                channel.BasicPublish(exchange: "",
-                    routingKey: queueName,
-                    basicProperties: null,
-                    body: new ReadOnlyMemory<byte>(body));
 
-                Console.WriteLine(" [x] Sent {0}", message);
+            var body = Encoding.UTF8.GetBytes(message);
 
+            channel.BasicPublish(exchange: "",
+                routingKey: queueName,
+                basicProperties: null,
+                body: new ReadOnlyMemory<byte>(body));
+
+            messagesRepository.Add(new OrderStatusMessage
+            {
+                Revision = order.Revision,
+                OrderId = oderId,
+                OrderStatus = (int)order.Status
+            });
+
+
+        }
+
+        public void Dispose()
+        {
+            channel?.Dispose();
         }
     }
 }

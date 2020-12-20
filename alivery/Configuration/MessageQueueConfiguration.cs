@@ -9,7 +9,7 @@ namespace alivery
 
         public string HostName
         {
-            get => ReadConfig("HostName");
+            get => ReadConfig("HostName", "localhost");
             set => WriteConfig("HostName", value);
         }
 
@@ -36,7 +36,7 @@ namespace alivery
             set => WriteConfig("QueueName", value);
         }
 
-        public MessageQueueConfiguration(Database db) : base(db)
+        public MessageQueueConfiguration(IRepository<Configuration> db) : base(db)
         {
         }
     }

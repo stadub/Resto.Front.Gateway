@@ -1,25 +1,27 @@
 ﻿using System;
 using System.ComponentModel;
 using System.Linq;
+using SQLite;
 
 namespace alivery
 {
     public class ConfigurationBase
     {
-        protected readonly Database db;
+        private readonly IRepository<Configuration> db;
 
-        public ConfigurationBase(Database db)
+        public ConfigurationBase(IRepository<Configuration> db)
         {
             this.db = db;
         }
 
-        protected T ReadConfig<T>(string option)
+        protected T ReadConfig<T>(string option, T defaultValue=default)
         {
-            var result =this.db.Read<Configuration>(configuration => configuration.Name == option);
-            var config= result.FirstOrDefault();
-            if (config == null)
-                return default(T);
-            var value=TypeDescriptor.GetConverter(typeof(T)).ConvertFromString(config.Value);
+            var result =db.GetById(option);
+            if (result==null)
+            {
+                return defaultValue;
+            }
+            var value=TypeDescriptor.GetConverter(typeof(T)).ConvertFromString(result.Value);
             return (T)value;
 
         }
@@ -32,12 +34,12 @@ namespace alivery
 
         protected void WriteConfig<T>(string option,T value)
         {
-            var result = this.db.Store<Configuration>(new Configuration
+            var result = db.Upsert(new Configuration
             {
-                Name = option,
+                Id = option,
                 Value = TypeDescriptor.GetConverter(typeof(T)).ConvertToString(value)
             });
-            if (result != 0)
+            if (result != 1)
                 throw new Exception("Fatal:Unable to write config");
         }
     }

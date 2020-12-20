@@ -2,12 +2,9 @@
 
 namespace alivery
 {
-    public class Configuration
+    public class Configuration:ValueObject
     {
-        [PrimaryKey, AutoIncrement]
-        public int Id { get; set; }
-        [Indexed]
-        public string Name { get; set; }
+
         public string Value { get; set; }
     }
 }

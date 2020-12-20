@@ -106,63 +106,13 @@
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
       <DependentUpon>Settings.settings</DependentUpon>
     </Compile>
-    <Compile Include="Restaurant\BanquetAndReserveTester.cs" />
-    <Compile Include="Restaurant\ClientBox.xaml.cs">
-      <DependentUpon>ClientBox.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="Restaurant\ClientView.xaml.cs">
-      <DependentUpon>ClientView.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="Restaurant\ClientViewer.cs" />
-    <Compile Include="Restaurant\BanquetAndReserveView.xaml.cs">
-      <DependentUpon>BanquetAndReserveView.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="Restaurant\ReservesViewer.cs" />
-    <Compile Include="Restaurant\ReservesView.xaml.cs">
-      <DependentUpon>ReservesView.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="Restaurant\MenuItemModel.cs" />
-    <Compile Include="Restaurant\MenuView.xaml.cs">
-      <DependentUpon>MenuView.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="Restaurant\MenuViewer.cs" />
-    <Compile Include="Restaurant\ProductGroupModel.cs" />
-    <Compile Include="Restaurant\ProductModel.cs" />
-    <Compile Include="Restaurant\RestaurantView.xaml.cs">
-      <DependentUpon>RestaurantView.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="Restaurant\RestaurantViewer.cs" />
-    <Compile Include="EditorTester.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
-    <Compile Include="Restaurant\SchemaView.xaml.cs">
-      <DependentUpon>SchemaView.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="Restaurant\SchemaViewer.cs" />
-    <Compile Include="Restaurant\SectionSchemaItemTemplateSelector.cs" />
-    <Compile Include="Restaurant\SectionSchemaModel.cs" />
-    <Compile Include="Restaurant\StreetBox.xaml.cs">
-      <DependentUpon>StreetBox.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="Restaurant\StreetView.xaml.cs">
-      <DependentUpon>StreetView.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="Restaurant\StreetViewer.cs" />
     <Compile Include="SamplePlugin.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="WpfHelpers\AddressesListToTextConverter.cs" />
-    <Compile Include="WpfHelpers\ProductToBitmapConverter.cs" />
-    <Compile Include="WpfHelpers\SystemColorToBrushConverter.cs" />
-    <Compile Include="WpfHelpers\ImageBytesToBitmapConverter.cs" />
-    <Compile Include="WpfHelpers\ChooseItemDialog.cs" />
-    <Compile Include="WpfHelpers\EmailsListToTextConverter.cs" />
-    <Compile Include="WpfHelpers\NotNullConverter.cs" />
-    <Compile Include="WpfHelpers\PhonesListToTextConverter.cs" />
-    <Compile Include="WpfHelpers\TypeMatchingConverter.cs" />
-    <Compile Include="WpfHelpers\TypeStyleSelector.cs" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Properties\Resources.resx">
@@ -191,46 +141,6 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="PreliminaryOrders\OrdersView.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="Restaurant\ClientBox.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="Restaurant\ClientView.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="Restaurant\BanquetAndReserveView.xaml">
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
-    </Page>
-    <Page Include="Restaurant\ReservesView.xaml">
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
-    </Page>
-    <Page Include="Restaurant\MenuView.xaml">
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
-    </Page>
-    <Page Include="Restaurant\RestaurantView.xaml">
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
-    </Page>
-    <Page Include="Restaurant\SchemaView.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="Restaurant\StreetBox.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="Restaurant\StreetView.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

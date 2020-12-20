@@ -1,8 +1,10 @@
-﻿namespace alivery
+﻿using SQLite;
+
+namespace alivery
 {
     public class AppConfiguration : ConfigurationBase
     {
-        public AppConfiguration(Database db) : base(db)
+        public AppConfiguration(IRepository<Configuration> db) : base(db)
         {
         }
 
@@ -15,7 +17,7 @@
 
         public bool FirstRun
         {
-            get => ReadConfig<bool>("FirstRun");
+            get => ReadConfig<bool>("FirstRun", true);
             set => WriteConfig("FirstRun", value);
         }
     }

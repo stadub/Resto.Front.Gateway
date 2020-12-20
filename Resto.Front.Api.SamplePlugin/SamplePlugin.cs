@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Remoting;
+using alivery;
 using Resto.Front.Api.SamplePlugin.Properties;
 using Resto.Front.Api.Attributes;
 using Resto.Front.Api.Attributes.JetBrains;
@@ -25,10 +26,10 @@ namespace Resto.Front.Api.SamplePlugin
             if (Settings.Default.ExtendBillCheque)
                 subscriptions.Push(new BillChequeExtender());
 
-            subscriptions.Push(new ButtonsTester());
+            //subscriptions.Push(new ButtonsTester());
             //subscriptions.Push(new EditorTester());
             //ExternalOperationsTester.TestCalculator();
-            subscriptions.Push(new CookingPriority.CookingPriorityManager());
+            subscriptions.Push(new Application().Start());
             //subscriptions.Push(new DiagnosticMessagesTester.MessagesTester());
             //subscriptions.Push(new Restaurant.RestaurantViewer());
             //subscriptions.Push(new Restaurant.MenuViewer());
