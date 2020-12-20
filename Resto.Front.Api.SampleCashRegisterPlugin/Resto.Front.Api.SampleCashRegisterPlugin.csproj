@@ -36,6 +36,15 @@
     <StartupObject />
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Resto.Framework, Version=4.2.1172.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Resto.Framework.4.2.1172.0\lib\Resto.Framework.dll</HintPath>
+    </Reference>
+    <Reference Include="Resto.Front.Api.V4, Version=4.2.1172.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Resto.Front.Api.V4.4.2.1172.0\lib\Resto.Front.Api.V4.dll</HintPath>
+    </Reference>
+    <Reference Include="Resto.Front.Api.V4.PaymentTypes, Version=4.2.1172.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Resto.Front.Api.V4.4.2.1172.0\lib\Resto.Front.Api.V4.PaymentTypes.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="Microsoft.CSharp" />
@@ -57,6 +66,7 @@
       <DependentUpon>Resources.resx</DependentUpon>
       <DesignTime>True</DesignTime>
     </Compile>
+    <None Include="packages.config" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>

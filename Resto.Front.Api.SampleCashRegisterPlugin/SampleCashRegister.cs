@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using JetBrains.Annotations;
 using Resto.Front.Api.Attributes.JetBrains;
 using Resto.Front.Api.Data.Device;
 using Resto.Front.Api.Data.Device.Results;
@@ -9,6 +10,8 @@ using Resto.Front.Api.Data.Device.Tasks;
 using Resto.Front.Api.Data.Security;
 using Resto.Front.Api.Exceptions;
 using Resto.Front.Api.UI;
+using Resto.Front.Api.V4.Data.Security;
+using Resto.Front.Api.V4.UI;
 
 namespace Resto.Front.Api.SampleCashRegisterPlugin
 {

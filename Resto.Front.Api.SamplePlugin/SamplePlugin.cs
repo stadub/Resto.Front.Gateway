@@ -28,7 +28,7 @@ namespace Resto.Front.Api.SamplePlugin
             subscriptions.Push(new ButtonsTester());
             //subscriptions.Push(new EditorTester());
             //ExternalOperationsTester.TestCalculator();
-            //subscriptions.Push(new CookingPriority.CookingPriorityManager());
+            subscriptions.Push(new CookingPriority.CookingPriorityManager());
             //subscriptions.Push(new DiagnosticMessagesTester.MessagesTester());
             //subscriptions.Push(new Restaurant.RestaurantViewer());
             //subscriptions.Push(new Restaurant.MenuViewer());

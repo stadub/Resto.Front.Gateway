@@ -65,6 +65,7 @@
     <Compile Include="BillChequeExtender.cs" />
     <Compile Include="ButtonsTester.cs" />
     <Compile Include="ChequeTaskProcessor.cs" />
+    <Compile Include="CookingPriorityReader.cs" />
     <Compile Include="CookingPriority\CookingPriorityManager.cs" />
     <Compile Include="CookingPriority\CookingPriorityView.xaml.cs">
       <DependentUpon>CookingPriorityView.xaml</DependentUpon>
@@ -255,6 +256,12 @@
       <Version>4.2.0</Version>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\alivery\alivery.csproj">
+      <Project>{22A35F19-478B-488C-87EB-742362029A03}</Project>
+      <Name>alivery</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

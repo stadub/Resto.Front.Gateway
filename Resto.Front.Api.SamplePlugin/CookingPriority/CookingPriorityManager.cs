@@ -2,6 +2,9 @@
 using System.Reactive.Disposables;
 using System.Threading;
 using System.Windows;
+using alivery;
+using Application = alivery.Application;
+
 
 namespace Resto.Front.Api.SamplePlugin.CookingPriority
 {
@@ -21,37 +24,39 @@ namespace Resto.Front.Api.SamplePlugin.CookingPriority
 
         private void EntryPoint()
         {
+            var app = new Application();
             Window window;
             lock (syncObject)
             {
                 if (disposed)
                     return;
 
-                var cookingPriorityView = new CookingPriorityView();
+                var cookingPriorityView = new CookingPriorityReader();
 
-                window = new Window
-                             {
-                                 SizeToContent = SizeToContent.WidthAndHeight,
-                                 ResizeMode = ResizeMode.CanResize,
-                                 Content = cookingPriorityView,
-                                 Title = GetType().Name,
-                                 Topmost = true
-                             };
+                //window = new Window
+                //             {
+                //                 SizeToContent = SizeToContent.WidthAndHeight,
+                //                 ResizeMode = ResizeMode.CanResize,
+                //                 Content = cookingPriorityView,
+                //                 Title = GetType().Name,
+                //                 Topmost = true
+                //             };
 
                 resources.Add(Disposable.Create(() =>
                 {
-                    window.Dispatcher.InvokeShutdown();
-                    window.Dispatcher.Thread.Join();
+                    app.Dispose();
+
                 }));
                 // NOTE: performance warning
                 // Do not reload all orders every time in a real production code, only replace single changed order.
                 resources.Add(PluginContext.Notifications.OrderChanged
-                    .Subscribe(_ => window.Dispatcher.BeginInvoke((Action)(cookingPriorityView.ReloadOrders))));
+                    .Subscribe(x => cookingPriorityView.ReloadOrders(x)));
             }
 
             PluginContext.Log.Info("Show CookingPriorityView dialog...");
-            window.ShowDialog();
+            //window.ShowDialog();
             PluginContext.Log.Info("Close CookingPriorityView dialog...");
+
         }
 
         public void Dispose()
