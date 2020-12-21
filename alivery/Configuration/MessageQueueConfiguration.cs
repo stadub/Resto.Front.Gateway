@@ -36,8 +36,10 @@ namespace alivery
             set => WriteConfig("QueueName", value);
         }
 
-        public MessageQueueConfiguration(IRepository<Configuration> db) : base(db)
+        public MessageQueueConfiguration(IRepository<Configuration> db, string configType) : base(db, configType)
         {
         }
     }
+
+
 }

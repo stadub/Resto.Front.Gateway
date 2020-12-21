@@ -4,7 +4,7 @@ namespace alivery
 {
     public class AppConfiguration : ConfigurationBase
     {
-        public AppConfiguration(IRepository<Configuration> db) : base(db)
+        public AppConfiguration(IRepository<Configuration> db) : base(db, "app")
         {
         }
 

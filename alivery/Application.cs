@@ -33,14 +33,14 @@ namespace alivery
 
             var config = new Configurations(configDb.Configuration);
 
-#if DEBUG
-            config.Preconfigure();
 
-#endif
+            config.LoadfromConfigFile();
+
+
 
             config.OnFirstRun();
 
-            messageQueue = new MessageQueue(config.MessageQueue, orderDb);
+            messageQueue = new MessageQueue(config.OrderMessageQueue, config.KitchenOrderMessageQueue, orderDb);
 
             resources.Add(Disposable.Create(Dispose));
         }
