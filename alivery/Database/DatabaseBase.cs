@@ -8,7 +8,7 @@ namespace alivery
     public class DatabaseBase:IDisposable
     {
         private bool disposed;
-        protected SQLiteConnection Connection { get; private set; }
+        protected SQLiteAsyncConnection Connection { get; private set; }
 
         private SQLiteConnectionString options;
         protected Dictionary<string,IRepository> Tables { get;  }
@@ -31,10 +31,10 @@ namespace alivery
         {
             // Get an absolute path to the database file
 
-            Connection = new SQLiteConnection(options);
+            Connection = new SQLiteAsyncConnection(options);
             foreach (var table in Tables)
             {
-                table.Value.Init(Connection);
+                table.Value.InitAsync(Connection);
             }
         }
 
@@ -57,7 +57,7 @@ namespace alivery
         {
             if (disposed)
                 return;
-            Connection.Close();
+            Connection.CloseAsync().Wait();
             disposed = true;
         }
     }

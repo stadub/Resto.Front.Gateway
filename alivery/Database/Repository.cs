@@ -10,68 +10,68 @@ namespace alivery
 {
     public interface IRepository
     {
-        void Init(SQLiteConnection database);
+        Task InitAsync(SQLiteAsyncConnection database);
     }
 
     public interface IRepository<T>
     {
-        int Add(T model);
-        int Update(T model);
-        int Upsert(T model);
-        List<T> GetAll(Expression<Func<T, bool>> predicate);
-        T GetById(string id);
-        T First(Expression<Func<T, bool>> predicate);
+        Task<int> AddAsync(T model);
+        Task<int> UpdateAsync(T model);
+        Task<int> UpsertAsync(T model);
+        Task<List<T>> GetAllAsync(Expression<Func<T, bool>> predicate);
+        Task<T> GetByIdAsync(string id);
+        Task<T> FirstAsync(Expression<Func<T, bool>> predicate);
 
     }
 
     public class Repository<T>: IRepository<T>, IRepository where T : ValueObject, new()
     {
-        private SQLiteConnection db;
+        private SQLiteAsyncConnection db;
 
-        public void Init(SQLiteConnection database)
+        public async Task InitAsync(SQLiteAsyncConnection database)
         {
             this.db = database;
 
-            db.CreateTable<T>();
+            await db.CreateTableAsync<T>();
 
         }
 
-        public int Add(T model)
+        public async Task<int> AddAsync(T model)
         {
             if (string.IsNullOrWhiteSpace(model.Id))
                 model.Id = Guid.NewGuid().ToString();
 
-            return db.Insert(model);
+            return await db.InsertAsync(model);
         }
 
 
-        public int Update(T model)
+        public async Task<int> UpdateAsync(T model)
         {
-            return db.Update(model);
+            return await db.UpdateAsync(model);
         }
 
-        public int Upsert(T model)
+        public async Task<int> UpsertAsync(T model)
         {
-            var item = db.Find<T>(model.Id);
-            return item!=null ? Update(model) :Add(model);
+            var item = await db.FindAsync<T>(model.Id);
+            return await (item!=null ? UpdateAsync(model) : AddAsync(model));
         }
 
-        public List<T> GetAll(Expression<Func<T, bool>> predicate) 
+        public Task<List<T>> GetAllAsync(Expression<Func<T, bool>> predicate) 
         {
             var query = db.Table<T>().Where(predicate);
 
-            var result = query.ToList();
+            var result = query.ToListAsync();
             return result;
         }
 
-        public T GetById(string id)
+        public async Task<T> GetByIdAsync(string id)
         {
-            return db.Find<T>(id);
+            return await db.FindAsync<T>(id);
         }
 
-        public T First(Expression<Func<T, bool>> predicate)
+        public async Task<T> FirstAsync(Expression<Func<T, bool>> predicate)
         {
-            var result = db.Find(predicate);
+            var result = await db.FindAsync(predicate);
             return result;
         }
     }

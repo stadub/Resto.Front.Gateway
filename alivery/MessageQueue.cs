@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using RabbitMQ.Client;
@@ -19,6 +20,7 @@ namespace alivery
         private readonly IRepository<Order> orderRepo;
         IModel channel;
         string queueName;
+        static SemaphoreSlim semaphoreSlim = new SemaphoreSlim(1, 1);
 
         public MessageQueue(MessageQueueConfiguration configuration, OrderDatabase orderDb)
         {
@@ -54,45 +56,51 @@ namespace alivery
             channel.Dispose();
         }
 
-        [MethodImpl(MethodImplOptions.Synchronized)]
-        public void SendStatusUpdates()
+        public async Task SendStatusUpdatesAsync()
         {
-            Start();
+            await semaphoreSlim.WaitAsync();
 
-            var notSent  = msgRepo.GetAll(x => x.OrderStatus == 0);
+            var notSent  = await msgRepo.GetAllAsync(x => x.OrderStatus == 0);
 
-            foreach (var orderStatusMessage in notSent)
+            var messages = new List<(Order order, OrderStatusMessage status)>();
+
+            foreach (var status in notSent)
             {
-                Order model = orderRepo.GetById(orderStatusMessage.OrderModelId);
+                Order model = await orderRepo.GetByIdAsync(status.OrderModelId);
 
                 if (model == null)
                 {
-                    model= orderRepo.First(order => order.Revision == orderStatusMessage.Revision && order.OrderId == orderStatusMessage.OrderId);
+                    model= await orderRepo.FirstAsync(order => order.Revision == status.Revision && order.OrderId == status.OrderId);
                 }
 
                 //received state updates during a down time so we have no info
                 if (model == null)
                     continue;
-                try
-                {
-                    SendOrderUpdate(orderStatusMessage, model);
-
-                }
-                catch (Exception e)
-                {
-                    PluginContext.Log.Error("Error sending status", e);
-
-                }
+                messages.Add((model, status));
             }
 
-            Stop();
+            try
+            {
+                Start();
+                foreach (var message in messages)
+                {
+                    await SendOrderUpdateAsync(message.status, message.order);
+                }
+                Stop();
 
+            }
+            catch (Exception e)
+            {
+                PluginContext.Log.Error("Error sending status", e);
+
+            }
+
+            semaphoreSlim.Release();
         }
 
 
-        public void SendOrderUpdate(OrderStatusMessage msgStatus, Order order)
+        public async Task SendOrderUpdateAsync(OrderStatusMessage msgStatus, Order order)
         {
-            Start();
             var oderId = order.Id.ToString();
 
             string message = JsonConvert.SerializeObject(order);
@@ -106,7 +114,7 @@ namespace alivery
 
             msgStatus.Status = 1;
 
-            msgRepo.Upsert(msgStatus);
+            await msgRepo.UpsertAsync(msgStatus);
 
         }
 

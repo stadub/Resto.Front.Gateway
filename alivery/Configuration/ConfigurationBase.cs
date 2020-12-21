@@ -1,6 +1,7 @@
 ﻿using System;
 using System.ComponentModel;
 using System.Linq;
+using System.Threading.Tasks;
 using SQLite;
 
 namespace alivery
@@ -14,9 +15,9 @@ namespace alivery
             this.db = db;
         }
 
-        protected T ReadConfig<T>(string option, T defaultValue=default)
+        protected async Task<T> ReadConfigAsync<T>(string option, T defaultValue=default)
         {
-            var result =db.GetById(option);
+            var result = await db.GetByIdAsync(option);
             if (result==null)
             {
                 return defaultValue;
@@ -26,15 +27,30 @@ namespace alivery
 
         }
 
+        protected async Task<string> ReadConfigAsync(string option)
+        {
+            return await ReadConfigAsync<string>(option);
+        }
+
+        protected T ReadConfig<T>(string option, T defaultValue = default)
+        {
+            return ReadConfigAsync<T>(option).Result;
+        }
+
         protected string ReadConfig(string option)
         {
-            return ReadConfig<string>(option);
+            return ReadConfigAsync<string>(option).Result;
+        }
+
+        protected void WriteConfig<T>(string option, T value)
+        {
+            WriteConfigAsync<T>(option, value).Wait();
         }
 
 
-        protected void WriteConfig<T>(string option,T value)
+        protected async Task WriteConfigAsync<T>(string option,T value)
         {
-            var result = db.Upsert(new Configuration
+            var result = await db.UpsertAsync(new Configuration
             {
                 Id = option,
                 Value = TypeDescriptor.GetConverter(typeof(T)).ConvertToString(value)

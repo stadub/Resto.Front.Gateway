@@ -48,7 +48,10 @@ namespace alivery
         [MethodImpl(MethodImplOptions.Synchronized)]
         public Application Start()
         {
-            var windowThread = new Thread(EntryPoint);
+            var windowThread = new Thread(() =>
+            {
+                EntryPoint().Wait();
+            });
             windowThread.SetApartmentState(ApartmentState.STA);
             windowThread.Start();
 
@@ -56,45 +59,51 @@ namespace alivery
             return this;
         }
 
-        private void EntryPoint()
+        private async Task EntryPoint()
         {
-            if (disposed)
-                return;
-
             PluginContext.Log.Info("Start init...");
 
+
             orderDb.Open();
+
+            await UpdateOrderStatus();
+
             // NOTE: performance warning
             // Do not reload all orders every time in a real production code, only replace single changed order.
             resources.Add(PluginContext.Notifications.OrderChanged
-                .Subscribe(ReceiveFromFront));
+                .Subscribe((x)=>ReceiveFromFront(x).Wait()));
 
-            UpdateOrderStatus();
-            PluginContext.Log.Info("End init...");
+            while (true)
+            {
+                await Task.Delay(1000);
+                if (disposed)
+                    break;
 
-            SendStatusUpdates();
 
+                await SendStatusUpdates();
+            }
+            PluginContext.Log.Info("Exit...");
 
         }
 
-        private void SendStatusUpdates()
+        private async Task SendStatusUpdates()
         {
             var orders = PluginContext.Operations.GetOrders();
             foreach (var order in orders)
             {
                 var oderId = order.Id.ToString();
-                var orderTransactionMessages  = orderDb.OrderStatusMessage.GetAll(x => x.OrderId == oderId);
+                var orderTransactionMessages  = await orderDb.OrderStatusMessage.GetAllAsync(x => x.OrderId == oderId);
 
                 if (orderTransactionMessages.Any(x => x.Revision == order.Revision))
                     continue;
 
-                var orderTransactions = orderDb.Order.GetAll(x => x.OrderId == oderId);
+                var orderTransactions = await orderDb.Order.GetAllAsync(x => x.OrderId == oderId);
 
                 var initial = orderTransactions.Min(x => x.Revision);
 
 
 
-                orderDb.OrderStatusMessage.Add(new OrderStatusMessage
+                await orderDb.OrderStatusMessage.AddAsync(new OrderStatusMessage
                 {
                     Revision = order.Revision,
                     OrderId = oderId,
@@ -103,18 +112,18 @@ namespace alivery
                     OrderModelId = null
                 });
             }
-            messageQueue.SendStatusUpdates();
+            await messageQueue.SendStatusUpdatesAsync();
 
         }
 
-        public void UpdateOrderStatus()
+        public async Task UpdateOrderStatus()
         {
             var orders = PluginContext.Operations.GetOrders();
 
             foreach (IOrder order in orders)
             {
                 var oderId = order.Id.ToString();
-                var orderTransactions = orderDb.Order.GetAll(x => x.OrderId == oderId);
+                var orderTransactions = await orderDb.Order.GetAllAsync(x => x.OrderId == oderId);
 
                 if(orderTransactions.Any(x =>x.Revision == order.Revision ))
                     continue;
@@ -122,7 +131,7 @@ namespace alivery
             }
         }
 
-        internal void ReceiveFromFront(EntityChangedEventArgs<IOrder> statusUpdate)
+        internal async Task ReceiveFromFront(EntityChangedEventArgs<IOrder> statusUpdate)
         {
             var order = statusUpdate.Entity;
 
@@ -136,12 +145,12 @@ namespace alivery
                     break;
             }
 
-            StoreOrder(order);
-            messageQueue.SendStatusUpdates();
+            await StoreOrder(order);
+            await messageQueue.SendStatusUpdatesAsync();
 
         }
 
-        private void StoreOrder(IOrder order)
+        private async Task StoreOrder(IOrder order)
         {
             var oderId = order.Id.ToString();
 
@@ -156,9 +165,9 @@ namespace alivery
                 Status = order.Status,
                 Json = jsonString
             };
-            orderDb.Order.Add(orderModel);
+            await orderDb.Order.AddAsync(orderModel);
 
-            orderDb.OrderStatusMessage.Add(new OrderStatusMessage
+            await orderDb.OrderStatusMessage.AddAsync(new OrderStatusMessage
             {
                 Revision = order.Revision,
                 OrderId = oderId,
