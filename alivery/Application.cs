@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 using Resto.Front.Api;
 using Resto.Front.Api.Data.Common;
 using Newtonsoft.Json;
+using Resto.Front.Api.Data.Kitchen;
 using Resto.Front.Api.Data.Orders;
 
 namespace alivery
@@ -71,7 +72,11 @@ namespace alivery
             // NOTE: performance warning
             // Do not reload all orders every time in a real production code, only replace single changed order.
             resources.Add(PluginContext.Notifications.OrderChanged
-                .Subscribe((x)=>ReceiveFromFront(x).Wait()));
+                .Subscribe((x)=>ReceiveOrderUpdate(x).Wait()));
+
+
+            resources.Add(PluginContext.Notifications.KitchenOrderChanged
+                .Subscribe((x) => ReceiveKitchenOrderUpdate(x).Wait()));
 
             while (true)
             {
@@ -85,6 +90,8 @@ namespace alivery
             PluginContext.Log.Info("Exit...");
 
         }
+
+
 
         private async Task SendStatusUpdates()
         {
@@ -131,7 +138,7 @@ namespace alivery
             }
         }
 
-        internal async Task ReceiveFromFront(EntityChangedEventArgs<IOrder> statusUpdate)
+        internal async Task ReceiveOrderUpdate(EntityChangedEventArgs<IOrder> statusUpdate)
         {
             var order = statusUpdate.Entity;
 
@@ -148,6 +155,50 @@ namespace alivery
             await StoreOrder(order);
             await messageQueue.SendStatusUpdatesAsync();
 
+        }
+        private async Task ReceiveKitchenOrderUpdate(EntityChangedEventArgs<IKitchenOrder> statusUpdate)
+        {
+            var order = statusUpdate.Entity;
+
+            switch (statusUpdate.EventType)
+            {
+                case EntityEventType.Created:
+                    break;
+                case EntityEventType.Updated:
+                    break;
+                case EntityEventType.Removed:
+                    break;
+            }
+
+            await StoreKitchenOrder(order);
+            await messageQueue.SendStatusUpdatesAsync();
+        }
+
+        private async Task StoreKitchenOrder(IKitchenOrder order)
+        {
+            var oderId = order.Id.ToString();
+
+            string jsonString = JsonConvert.SerializeObject(order);
+
+            var orderModel = new KitchenOrder
+            {
+                CookingPriority = order.CookingPriority,
+                OrderId = oderId,
+                Number = (int)order.Number,
+                BaseOrderId = order.BaseOrderId.ToString(),
+                Json = jsonString
+            };
+            await orderDb.KitchenOrder.AddAsync(orderModel);
+
+            await orderDb.KitchenOrderStatusMessage.AddAsync(new KitchenOrderStatusMessage
+            {
+                CookingPriority = order.CookingPriority,
+                OrderId = oderId,
+                Number = (int)order.Number,
+                BaseOrderId = order.BaseOrderId.ToString(),
+                Status = 0,
+                OrderModelId = orderModel.Id
+            });
         }
 
         private async Task StoreOrder(IOrder order)

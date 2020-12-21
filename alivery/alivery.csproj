@@ -108,6 +108,9 @@
     <Compile Include="Database\Repository.cs" />
     <Compile Include="Models\Configuration.cs" />
     <Compile Include="Database\DatabaseBase.cs" />
+    <Compile Include="Models\KitchenOrder.cs" />
+    <Compile Include="Models\KitchenOrderStatusMessage.cs" />
+    <Compile Include="Models\MessageStatusBase.cs" />
     <Compile Include="Models\Order.cs" />
     <Compile Include="Models\OrderItem.cs" />
     <Compile Include="Models\Product.cs" />

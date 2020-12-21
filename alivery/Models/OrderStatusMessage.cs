@@ -2,7 +2,7 @@
 
 namespace alivery
 {
-    public class OrderStatusMessage : ValueObject
+    public class OrderStatusMessage : MessageStatusBase
     {
         [Indexed]
         public string OrderId { get; set; }
@@ -11,7 +11,6 @@ namespace alivery
         [Indexed]
         public int Revision { get; set; }
 
-        public int Status { get; set; }
 
         [Indexed]
         public string OrderModelId { get; set; }

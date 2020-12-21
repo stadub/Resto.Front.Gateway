@@ -56,11 +56,9 @@ namespace alivery
             channel.Dispose();
         }
 
-        public async Task SendStatusUpdatesAsync()
+        private async Task<List<(Order order, OrderStatusMessage status)>> GetOrderInfoAsync()
         {
-            await semaphoreSlim.WaitAsync();
-
-            var notSent  = await msgRepo.GetAllAsync(x => x.OrderStatus == 0);
+            var notSent = await msgRepo.GetAllAsync(x => x.Status == 0);
 
             var messages = new List<(Order order, OrderStatusMessage status)>();
 
@@ -70,7 +68,7 @@ namespace alivery
 
                 if (model == null)
                 {
-                    model= await orderRepo.FirstAsync(order => order.Revision == status.Revision && order.OrderId == status.OrderId);
+                    model = await orderRepo.FirstAsync(order => order.Revision == status.Revision && order.OrderId == status.OrderId);
                 }
 
                 //received state updates during a down time so we have no info
@@ -78,13 +76,56 @@ namespace alivery
                     continue;
                 messages.Add((model, status));
             }
+            return messages;
+        }
 
+        private async Task<List<(KitchenOrder order, KitchenOrderStatusMessage status)>> GetKitchenOrderInfoAsync()
+        {
+            var notSent = await orderDb.KitchenOrderStatusMessage.GetAllAsync(x => x.Status == 0);
+
+            var messages = new List<(KitchenOrder order, KitchenOrderStatusMessage status)>();
+
+            foreach (var status in notSent)
+            {
+                KitchenOrder model = await orderDb.KitchenOrder.GetByIdAsync(status.OrderModelId);
+
+                //if (model == null)
+                //{
+                //    model = await orderRepo.FirstAsync(order => order.Revision == status.Revision && order.OrderId == status.OrderId);
+                //}
+
+                //received state updates during a down time so we have no info
+                if (model == null)
+                    continue;
+                messages.Add((model, status));
+            }
+            return messages;
+        }
+
+        public async Task SendStatusUpdatesAsync()
+        {
+            await semaphoreSlim.WaitAsync();
+
+            var orderMessages = await GetOrderInfoAsync();
+            var kOrderMessages = await GetOrderInfoAsync();
             try
             {
                 Start();
-                foreach (var message in messages)
+                foreach (var message in orderMessages)
                 {
-                    await SendOrderUpdateAsync(message.status, message.order);
+                    await SendOrderUpdateAsync(message.order);
+                    message.status.Status = 1;
+
+                    await msgRepo.UpsertAsync(message.status);
+
+                }
+                foreach (var message in kOrderMessages)
+                {
+                    await SendOrderUpdateAsync( message.order);
+                    message.status.Status = 1;
+
+                    await msgRepo.UpsertAsync(message.status);
+
                 }
                 Stop();
 
@@ -99,7 +140,7 @@ namespace alivery
         }
 
 
-        public async Task SendOrderUpdateAsync(OrderStatusMessage msgStatus, Order order)
+        public async Task SendOrderUpdateAsync(ValueObject order)
         {
             var oderId = order.Id.ToString();
 
@@ -111,11 +152,6 @@ namespace alivery
                 routingKey: queueName,
                 basicProperties: null,
                 body: new ReadOnlyMemory<byte>(body));
-
-            msgStatus.Status = 1;
-
-            await msgRepo.UpsertAsync(msgStatus);
-
         }
 
         public void Dispose()
