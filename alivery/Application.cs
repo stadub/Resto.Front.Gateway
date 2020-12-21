@@ -39,7 +39,7 @@ namespace alivery
 
             config.OnFirstRun();
 
-            messageQueue = new MessageQueue(config.MessageQueue, orderDb.OrderStatusMessage);
+            messageQueue = new MessageQueue(config.MessageQueue, orderDb);
 
             resources.Add(Disposable.Create(Dispose));
         }
@@ -64,7 +64,6 @@ namespace alivery
             PluginContext.Log.Info("Start init...");
 
             orderDb.Open();
-            messageQueue.Start();
             // NOTE: performance warning
             // Do not reload all orders every time in a real production code, only replace single changed order.
             resources.Add(PluginContext.Notifications.OrderChanged
@@ -93,8 +92,19 @@ namespace alivery
 
                 var initial = orderTransactions.Min(x => x.Revision);
 
-                messageQueue.Send(order);
+
+
+                orderDb.OrderStatusMessage.Add(new OrderStatusMessage
+                {
+                    Revision = order.Revision,
+                    OrderId = oderId,
+                    OrderStatus = (int) order.Status,
+                    Status = 0,
+                    OrderModelId = null
+                });
             }
+            messageQueue.SendStatusUpdates();
+
         }
 
         public void UpdateOrderStatus()
@@ -127,7 +137,7 @@ namespace alivery
             }
 
             StoreOrder(order);
-            messageQueue.Send(order);
+            messageQueue.SendStatusUpdates();
 
         }
 
@@ -137,7 +147,7 @@ namespace alivery
 
             string jsonString = JsonConvert.SerializeObject(order);
 
-            orderDb.Order.Add(new Order
+            var orderModel = new Order
             {
                 Revision = order.Revision,
                 CloseTime = order.CloseTime,
@@ -145,6 +155,16 @@ namespace alivery
                 OrderId = oderId,
                 Status = order.Status,
                 Json = jsonString
+            };
+            orderDb.Order.Add(orderModel);
+
+            orderDb.OrderStatusMessage.Add(new OrderStatusMessage
+            {
+                Revision = order.Revision,
+                OrderId = oderId,
+                OrderStatus = (int)order.Status,
+                Status = 0,
+                OrderModelId = orderModel.Id
             });
         }
 

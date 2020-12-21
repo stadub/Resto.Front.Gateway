@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using RabbitMQ.Client;
+using Resto.Front.Api;
 using Resto.Front.Api.Data.Orders;
 
 namespace alivery
@@ -12,14 +14,18 @@ namespace alivery
     class MessageQueue:IDisposable
     {
         private readonly MessageQueueConfiguration config;
-        private readonly IRepository<OrderStatusMessage> messagesRepository;
+        private readonly OrderDatabase orderDb;
+        private readonly IRepository<OrderStatusMessage> msgRepo;
+        private readonly IRepository<Order> orderRepo;
         IModel channel;
         string queueName;
 
-        public MessageQueue(MessageQueueConfiguration configuration, IRepository<OrderStatusMessage> messagesRepository)
+        public MessageQueue(MessageQueueConfiguration configuration, OrderDatabase orderDb)
         {
             this.config = configuration;
-            this.messagesRepository = messagesRepository;
+            this.orderDb = orderDb;
+            this.msgRepo = orderDb.OrderStatusMessage;
+            this.orderRepo = orderDb.Order;
         }
 
 
@@ -48,12 +54,49 @@ namespace alivery
             channel.Dispose();
         }
 
-        public void Send(IOrder order)
+        [MethodImpl(MethodImplOptions.Synchronized)]
+        public void SendStatusUpdates()
         {
-                var oderId = order.Id.ToString();
+            Start();
 
-                string message = JsonConvert.SerializeObject(order);
+            var notSent  = msgRepo.GetAll(x => x.OrderStatus == 0);
 
+
+            foreach (var orderStatusMessage in notSent)
+            {
+                Order model = orderRepo.GetById(orderStatusMessage.OrderId);
+
+                if (model == null)
+                {
+                    model= orderRepo.First(order => order.Revision == orderStatusMessage.Revision && order.OrderId == orderStatusMessage.OrderId);
+                }
+
+                //received state updates during a down time
+                if (model == null)
+                    continue;
+                try
+                {
+                    SendOrderUpdate(orderStatusMessage, model);
+
+                }
+                catch (Exception e)
+                {
+                    PluginContext.Log.Error("Error sending status", e);
+
+                }
+            }
+
+
+           
+        }
+
+
+        public void SendOrderUpdate(OrderStatusMessage msgStatus, Order order)
+        {
+            Start();
+            var oderId = order.Id.ToString();
+
+            string message = JsonConvert.SerializeObject(order);
 
             var body = Encoding.UTF8.GetBytes(message);
 
@@ -62,14 +105,11 @@ namespace alivery
                 basicProperties: null,
                 body: new ReadOnlyMemory<byte>(body));
 
-            messagesRepository.Add(new OrderStatusMessage
-            {
-                Revision = order.Revision,
-                OrderId = oderId,
-                OrderStatus = (int)order.Status
-            });
+            msgStatus.Status = 1;
 
+            msgRepo.Upsert(msgStatus);
 
+            Stop();
         }
 
         public void Dispose()

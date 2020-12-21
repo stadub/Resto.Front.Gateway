@@ -22,9 +22,7 @@ namespace alivery
             if (Application.FirstRun)
             {
                 Application.SelfId = Guid.NewGuid().ToString();
-                Preconfigure();
                 Application.FirstRun = false;
-
             }
         }
 
