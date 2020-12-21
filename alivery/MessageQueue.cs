@@ -61,17 +61,16 @@ namespace alivery
 
             var notSent  = msgRepo.GetAll(x => x.OrderStatus == 0);
 
-
             foreach (var orderStatusMessage in notSent)
             {
-                Order model = orderRepo.GetById(orderStatusMessage.OrderId);
+                Order model = orderRepo.GetById(orderStatusMessage.OrderModelId);
 
                 if (model == null)
                 {
                     model= orderRepo.First(order => order.Revision == orderStatusMessage.Revision && order.OrderId == orderStatusMessage.OrderId);
                 }
 
-                //received state updates during a down time
+                //received state updates during a down time so we have no info
                 if (model == null)
                     continue;
                 try
@@ -86,8 +85,8 @@ namespace alivery
                 }
             }
 
+            Stop();
 
-           
         }
 
 
@@ -109,7 +108,6 @@ namespace alivery
 
             msgRepo.Upsert(msgStatus);
 
-            Stop();
         }
 
         public void Dispose()
