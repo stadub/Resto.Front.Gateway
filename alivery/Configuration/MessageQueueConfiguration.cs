@@ -23,11 +23,6 @@ namespace alivery
             get => ReadConfig("Password");
             set => WriteConfig("Password", value);
         }
-        public string VirtualHost
-        {
-            get => ReadConfig("VirtualHost");
-            set => WriteConfig("VirtualHost", value);
-        }
 
 
         public string QueueName

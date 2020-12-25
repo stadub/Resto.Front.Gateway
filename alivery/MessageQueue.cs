@@ -5,6 +5,7 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using MassTransit;
 using Newtonsoft.Json;
 using RabbitMQ.Client;
 using Resto.Front.Api;
@@ -33,20 +34,150 @@ namespace alivery
         }
 
 
-        public void Start(MessageQueueConfiguration config)
+        public class Message
+        {
+            public string Text { get; set; }
+        }
+        //public static async Task Main()
+        //{
+        //    var bus = Bus.Factory.CreateUsingRabbitMq(sbc =>
+        //    {
+        //        sbc.Host("rabbitmq://localhost", configurator =>
+        //        {
+        //            configurator.Password("test");
+        //            configurator.Username("test");
+        //        });
+
+        //        sbc.ReceiveEndpoint("test_queue", ep =>
+        //        {
+        //            ep.Handler<Message>(context =>
+        //            {
+        //                return Console.Out.WriteLineAsync($"Received: {context.Message.Text}");
+        //            });
+        //        });
+        //    });
+
+        //    await bus.StartAsync(); // This is important!
+
+        //    await bus.Publish(new Message { Text = "Hi" });
+
+        //    Console.WriteLine("Press any key to exit");
+        //    await Task.Run(() => Console.ReadKey());
+
+        //    await bus.StopAsync();
+        //}
+        //public static async Task Main1()
+        //{
+        //    var bus = Bus.Factory.CreateUsingRabbitMq(sbc =>
+        //    {
+        //        sbc.Host("185-167-96-77.cloud-xip.io",
+        //            configurator =>
+        //            {
+        //                configurator.Username("test");
+        //                configurator.Password("test");
+        //                //configurator.UseSsl(sslConfigurator =>
+        //                //{
+        //                //    sslConfigurator.
+        //                //});
+        //            });
+                
+        //        //sbc.ReceiveEndpoint("test_queue", ep =>
+        //        //{
+        //        //    ep.Handler<Message>(context =>
+        //        //    {
+        //        //        return Console.Out.WriteLineAsync($"Received: {context.Message.Text}");
+        //        //    });
+        //        //});
+        //    });
+
+        //    await bus.StartAsync(); // This is important!
+
+        //    await bus.Publish(new Message { Text = "Hi" });
+
+        //    Console.WriteLine("Press any key to exit");
+        //    await Task.Run(() => Console.ReadKey());
+
+        //    await bus.StopAsync();
+        //}
+
+        public void SendTest()
         {
             var factory = new ConnectionFactory()
             {
-                HostName = config.HostName,
-                UserName = config.UserName,
-                Password = config.Password,
-                VirtualHost = config.VirtualHost,
+                HostName = "185-167-96-77.cloud-xip.io", 
+                UserName = "test",
+                Password = "test",
+                Port = 5672,
+                VirtualHost = "/"
+            };
+            using (var connection = factory.CreateConnection())
+            using (var channel = connection.CreateModel())
+            {
+                channel.QueueDeclare(queue: "hello",
+                    durable: false,
+                    exclusive: false,
+                    autoDelete: false,
+                    arguments: null);
 
+                string message = "Hello World!";
+                var body = Encoding.UTF8.GetBytes(message);
+
+                channel.BasicPublish(exchange: "",
+                    routingKey: "hello",
+                    basicProperties: null,
+                    body: body);
+                Console.WriteLine(" [x] Sent {0}", message);
+            }
+
+            Console.WriteLine(" Press [enter] to exit.");
+            Console.ReadLine();
+        }
+
+
+        public void Start(MessageQueueConfiguration config)
+        {
+           // Main().Wait();
+            SendTest();
+
+               ConnectionFactory factory = new ConnectionFactory();
+            factory.UserName = "test";
+            factory.Password = "test";
+            //factory.VirtualHost = "/";
+            //factory..Protocol = Protocols.FromEnvironment();
+            factory.HostName = "185-167-96-77.cloud-xip.io";
+            //factory.Port = AmqpTcpEndpoint.UseDefaultPort;
+            IConnection conn = factory.CreateConnection();
+
+            string UserName = config.UserName;
+            string Password = config.Password;
+            string HostName = config.HostName;
+
+            var factory1 = new ConnectionFactory()
+            {
+                HostName = HostName,
+                UserName = UserName,
+                Password = Password,
+
+                //HostName = config.HostName,
+                //UserName = config.UserName,
+
+                //Password = config.Password,
+                VirtualHost = "/",
+                Port = 15671// AmqpTcpEndpoint.UseDefaultPort
             };
             queueName = config.QueueName;
-
+            
             var connection = factory.CreateConnection();
             channel = connection.CreateModel();
+            var properties = channel.CreateBasicProperties();
+
+            properties.Persistent = false;
+
+            byte[] messagebuffer = Encoding.Default.GetBytes("Message from Topic Exchange 'Bombay' ");
+            channel.BasicPublish("topic.exchange", "Message.korders.Email", properties, messagebuffer);
+            //channel.BasicPublish(queueName, "Message.Bombay.Email", properties, messagebuffer);
+
+
             channel.QueueDeclare(queue: queueName,
                 durable: false,
                 exclusive: false,

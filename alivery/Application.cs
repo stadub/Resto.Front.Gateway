@@ -27,7 +27,7 @@ namespace alivery
 
         public Application()
         {
-            configDb = new ConfigDatabase();
+            configDb = new ConfigDatabase("суперсекретный пароль");
             orderDb = new OrderDatabase();
             configDb.Open();
 

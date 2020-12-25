@@ -2,7 +2,7 @@
 {
     public class ConfigDatabase: DatabaseBase
     {
-        public ConfigDatabase() : base("config", "суперсекретный пароль")
+        public ConfigDatabase(string pass) : base("config", pass)
         {
             Configuration = RegisterTable<Configuration>();
 

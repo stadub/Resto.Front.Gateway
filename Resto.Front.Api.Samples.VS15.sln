@@ -5,6 +5,18 @@ VisualStudioVersion = 16.0.30717.126
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "alivery", "alivery\alivery.csproj", "{22A35F19-478B-488C-87EB-742362029A03}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DbConfiguration", "DbConfiguration\DbConfiguration.csproj", "{EF65168E-A6FC-4773-9DC4-683F7591B39F}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SqliteDatabase", "SqliteDatabase\SqliteDatabase.csproj", "{ABF6BA51-6AE7-47D7-8C63-906807891765}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Alivery.DbConfiguration", "Alivery.DbConfiguration\Alivery.DbConfiguration.csproj", "{A00FCF9E-6731-4769-B2B2-25F92EDF42E0}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Alivery.Net", "Alivery.Net\Alivery.Net.csproj", "{8258C73A-0C0B-46B8-8EA1-A2A4910341FF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Alivery.Db", "Alivery.Db\Alivery.Db.csproj", "{ED4099F0-C99C-401C-8128-F7046BFF1306}"
+EndProject
+Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "Alivery.MsgService", "Alivery.MsgService\Alivery.MsgService.pyproj", "{C4E2EF6E-5CDA-4518-AC52-24A9F37FA344}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +27,28 @@ Global
 		{22A35F19-478B-488C-87EB-742362029A03}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{22A35F19-478B-488C-87EB-742362029A03}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{22A35F19-478B-488C-87EB-742362029A03}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EF65168E-A6FC-4773-9DC4-683F7591B39F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EF65168E-A6FC-4773-9DC4-683F7591B39F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EF65168E-A6FC-4773-9DC4-683F7591B39F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EF65168E-A6FC-4773-9DC4-683F7591B39F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{ABF6BA51-6AE7-47D7-8C63-906807891765}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{ABF6BA51-6AE7-47D7-8C63-906807891765}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{ABF6BA51-6AE7-47D7-8C63-906807891765}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{ABF6BA51-6AE7-47D7-8C63-906807891765}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A00FCF9E-6731-4769-B2B2-25F92EDF42E0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A00FCF9E-6731-4769-B2B2-25F92EDF42E0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A00FCF9E-6731-4769-B2B2-25F92EDF42E0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A00FCF9E-6731-4769-B2B2-25F92EDF42E0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8258C73A-0C0B-46B8-8EA1-A2A4910341FF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8258C73A-0C0B-46B8-8EA1-A2A4910341FF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8258C73A-0C0B-46B8-8EA1-A2A4910341FF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8258C73A-0C0B-46B8-8EA1-A2A4910341FF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{ED4099F0-C99C-401C-8128-F7046BFF1306}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{ED4099F0-C99C-401C-8128-F7046BFF1306}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{ED4099F0-C99C-401C-8128-F7046BFF1306}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{ED4099F0-C99C-401C-8128-F7046BFF1306}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C4E2EF6E-5CDA-4518-AC52-24A9F37FA344}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C4E2EF6E-5CDA-4518-AC52-24A9F37FA344}.Release|Any CPU.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

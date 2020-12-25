@@ -35,11 +35,11 @@ namespace alivery
         {
             var appConfig = ConfigurationManager.OpenExeConfiguration(Assembly.GetExecutingAssembly().Location);
 
-            var configurationElement = appConfig.AppSettings.Settings[name];
+            var configurationElement = appConfig.AppSettings.Settings[config.ConfigType + name];
             if (configurationElement != null)
             {
                 var value = configurationElement.Value;
-                PluginContext.Log.Info($"Config section {name} for config {config.ConfigType} reloaded from file");
+                PluginContext.Log.Info($"Config section [{config.ConfigType}:{name}] reloaded from file");
 
                 config[name] = value;
             }
@@ -49,16 +49,18 @@ namespace alivery
         {
 
 
-            LoadFromConfig(OrderMessageQueue, "OrderHostName");
-            LoadFromConfig(OrderMessageQueue, "OrderUserName");
-            LoadFromConfig(OrderMessageQueue, "OrderPassword");
-            LoadFromConfig(OrderMessageQueue, "OrderVirtualHost");
+            LoadFromConfig(OrderMessageQueue, "HostName");
+            LoadFromConfig(OrderMessageQueue, "UserName");
+            LoadFromConfig(OrderMessageQueue, "Password");
+            LoadFromConfig(OrderMessageQueue, "VirtualHost");
+            LoadFromConfig(OrderMessageQueue, "QueueName");
+            
 
-
-            LoadFromConfig(KitchenOrderMessageQueue, "KitchenOrderHostName");
-            LoadFromConfig(KitchenOrderMessageQueue, "KitchenOrderUserName");
-            LoadFromConfig(KitchenOrderMessageQueue, "KitchenOrderPassword");
-            LoadFromConfig(KitchenOrderMessageQueue, "KitchenOrderVirtualHost");
+            LoadFromConfig(KitchenOrderMessageQueue, "HostName");
+            LoadFromConfig(KitchenOrderMessageQueue, "UserName");
+            LoadFromConfig(KitchenOrderMessageQueue, "Password");
+            LoadFromConfig(KitchenOrderMessageQueue, "VirtualHost");
+            LoadFromConfig(KitchenOrderMessageQueue, "QueueName");
 
            
         }
