@@ -1,6 +1,6 @@
 ﻿using SQLite;
 
-namespace alivery
+namespace SqliteDatabase
 {
     public class ValueObject
     {

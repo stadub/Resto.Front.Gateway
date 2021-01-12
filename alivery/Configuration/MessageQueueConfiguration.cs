@@ -1,9 +1,12 @@
 ﻿using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
+using DbConfiguration.Models;
+using SqliteDatabase;
 
 namespace alivery
 {
+
     public class MessageQueueConfiguration: ConfigurationBase
     {
 
@@ -31,7 +34,7 @@ namespace alivery
             set => WriteConfig("QueueName", value);
         }
 
-        public MessageQueueConfiguration(IRepository<Configuration> db, string configType) : base(db, configType)
+        public MessageQueueConfiguration(IRepository<ConfigurationModel> db, string configType) : base(db, configType)
         {
         }
     }

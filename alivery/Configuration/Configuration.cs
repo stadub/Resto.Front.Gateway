@@ -1,26 +1,32 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Configuration;
 using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
+using DbConfiguration.Models;
 using Resto.Front.Api;
+using SqliteDatabase;
 
 namespace alivery
 {
-    class Configurations
+    public class ConfigRegistry: AppConfigurationBase
     {
-        public Configurations(IRepository<Configuration> db)
+        public ConfigRegistry(IRepository<ConfigurationModel> db) : base(db)
         {
-            Application = new AppConfiguration(db);
-            KitchenOrderMessageQueue = new MessageQueueConfiguration(db, "KitchenOrder");
-            OrderMessageQueue = new MessageQueueConfiguration(db, "Order");
+
+            OrderMessageQueue= base.RegisterConfigSection( ()=>new MessageQueueConfiguration(db, "Order"));
+            KitchenOrderMessageQueue = base.RegisterConfigSection( ()=>new MessageQueueConfiguration(db, "KitchenOrder"));
+            Application = base.RegisterConfigSection( ()=>new AppConfiguration(db));
+
+            //SyncFromConfigFile();
         }
 
-        public AppConfiguration Application { get; }
         public MessageQueueConfiguration OrderMessageQueue { get; }
         public MessageQueueConfiguration KitchenOrderMessageQueue { get; }
+        public AppConfiguration Application { get; }
 
         public void OnFirstRun()
         {
@@ -31,38 +37,56 @@ namespace alivery
             }
         }
 
-        private void LoadFromConfig(ConfigurationBase config, string name)
-        {
-            var appConfig = ConfigurationManager.OpenExeConfiguration(Assembly.GetExecutingAssembly().Location);
+    }
 
-            var configurationElement = appConfig.AppSettings.Settings[config.ConfigType + name];
-            if (configurationElement != null)
+    public class AppConfigurationBase
+    {
+        protected Dictionary<string, ConfigurationBase> ConfigurationSections { get; }
+        public AppConfigurationBase(IRepository<ConfigurationModel> db)
+        {
+            ConfigurationSections = new Dictionary<string, ConfigurationBase>();
+        }
+
+        protected T RegisterConfigSection<T>(Func<T> initFunc) where  T: ConfigurationBase
+        {
+            var configSection = initFunc();
+            ConfigurationSections.Add(configSection.ConfigType, configSection);
+            return configSection;
+        }
+
+        protected T RegisterConfigSection<T>() where T : ConfigurationBase, new()
+        {
+            var configSection = new T();
+            ConfigurationSections.Add(configSection.ConfigType, configSection);
+            return configSection;
+        }
+
+
+        public void SyncFromConfigFile()
+        {
+            var section = (NameValueCollection)ConfigurationManager.GetSection("ConfigSettings");
+
+            foreach (var key in section.AllKeys)
             {
-                var value = configurationElement.Value;
-                PluginContext.Log.Info($"Config section [{config.ConfigType}:{name}] reloaded from file");
+                var split = key.Split(':');
 
-                config[name] = value;
+                var (configSection, configName) = (split[0], split[1]);
+
+                if (ConfigurationSections.TryGetValue(configSection, out var configuration))
+                {
+                    var value = section.Get(key);
+
+                    configuration[configName] = value;
+                    PluginContext.Log.Info($"Config section [{configSection}:{configName}] reloaded from file");
+
+                }
+                else
+                {
+                    PluginContext.Log.Warn($"App config section [{configSection}] is not match to any db config section");
+                }
             }
+
         }
 
-        public void LoadfromConfigFile()
-        {
-
-
-            LoadFromConfig(OrderMessageQueue, "HostName");
-            LoadFromConfig(OrderMessageQueue, "UserName");
-            LoadFromConfig(OrderMessageQueue, "Password");
-            LoadFromConfig(OrderMessageQueue, "VirtualHost");
-            LoadFromConfig(OrderMessageQueue, "QueueName");
-            
-
-            LoadFromConfig(KitchenOrderMessageQueue, "HostName");
-            LoadFromConfig(KitchenOrderMessageQueue, "UserName");
-            LoadFromConfig(KitchenOrderMessageQueue, "Password");
-            LoadFromConfig(KitchenOrderMessageQueue, "VirtualHost");
-            LoadFromConfig(KitchenOrderMessageQueue, "QueueName");
-
-           
-        }
     }
 }

@@ -1,14 +1,14 @@
 ﻿using System;
-using Resto.Front.Api.Data.Orders;
 using SQLite;
+using SqliteDatabase;
 
-namespace alivery
+namespace Alivery.Db.Model
 {
     public class Order: ValueObject
     {
         [Indexed]
         public string Json { get; set; }
-        public OrderStatus Status { get; set; }
+        public int Status { get; set; }
 
         [Indexed]
         public int Revision { get; set; }

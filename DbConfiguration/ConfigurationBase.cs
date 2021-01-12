@@ -1,28 +1,20 @@
 ﻿using System;
 using System.ComponentModel;
-using System.Linq;
 using System.Threading.Tasks;
 using DbConfiguration.Models;
-using SQLite;
 using SqliteDatabase;
 
-namespace alivery
+namespace DbConfiguration
 {
     public class ConfigurationBase
     {
         private readonly IRepository<ConfigurationModel> db;
         public string ConfigType { get; }
 
-        protected ConfigurationBase(IRepository<ConfigurationModel> db, string configType)
+        public ConfigurationBase(IRepository<ConfigurationModel> db, string configType)
         {
             this.db = db;
             ConfigType = configType;
-        }
-
-        protected ConfigurationBase(IRepository<ConfigurationModel> db)
-        {
-            this.db = db;
-            ConfigType = this.GetType().Name;
         }
 
         protected async Task<T> ReadConfigAsync<T>(string option, T defaultValue=default)

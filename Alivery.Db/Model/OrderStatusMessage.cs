@@ -1,6 +1,6 @@
 ﻿using SQLite;
 
-namespace alivery
+namespace Alivery.Db.Model
 {
     public class OrderStatusMessage : MessageStatusBase
     {

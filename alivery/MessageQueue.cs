@@ -5,15 +5,18 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Alivery.Db;
+using Alivery.Db.Model;
 using MassTransit;
 using Newtonsoft.Json;
 using RabbitMQ.Client;
 using Resto.Front.Api;
 using Resto.Front.Api.Data.Orders;
+using SqliteDatabase;
 
 namespace alivery
 {
-    class MessageQueue:IDisposable
+    public class MessageQueue:IDisposable
     {
         private readonly MessageQueueConfiguration orderConfig;
         private readonly MessageQueueConfiguration korderConfig;
@@ -299,7 +302,7 @@ namespace alivery
         }
 
 
-        public async Task SendOrderUpdateAsync(ValueObject order)
+        public async Task SendOrderUpdateAsync<T>(T order) where T: ValueObject
         {
             var oderId = order.Id.ToString();
 

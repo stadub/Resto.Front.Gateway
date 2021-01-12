@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using SQLite;
 
-namespace alivery
+namespace SqliteDatabase
 {
     public class DatabaseBase:IDisposable
     {

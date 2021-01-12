@@ -1,10 +1,12 @@
-﻿using SQLite;
+﻿using DbConfiguration.Models;
+using SQLite;
+using SqliteDatabase;
 
 namespace alivery
 {
     public class AppConfiguration : ConfigurationBase
     {
-        public AppConfiguration(IRepository<Configuration> db) : base(db, "app")
+        public AppConfiguration(IRepository<ConfigurationModel> db) : base(db, "app")
         {
         }
 

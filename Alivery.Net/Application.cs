@@ -1,23 +1,23 @@
-﻿
-using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
+﻿using System;
 using System.Linq;
 using System.Reactive.Disposables;
 using System.Runtime.CompilerServices;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Alivery.Db;
-using Alivery.Db.Model;
-using DbConfiguration;
+using alivery;
+using Newtonsoft.Json;
 using Resto.Front.Api;
 using Resto.Front.Api.Data.Common;
-using Newtonsoft.Json;
 using Resto.Front.Api.Data.Kitchen;
 using Resto.Front.Api.Data.Orders;
+using ConfigDatabase = DbConfiguration.ConfigDatabase;
+using KitchenOrder = Alivery.Db.Model.KitchenOrder;
+using KitchenOrderStatusMessage = Alivery.Db.Model.KitchenOrderStatusMessage;
+using Order = Alivery.Db.Model.Order;
+using OrderDatabase = Alivery.Db.OrderDatabase;
+using OrderStatusMessage = Alivery.Db.Model.OrderStatusMessage;
 
-namespace alivery
+namespace Alivery.Net
 {
     public class Application:IDisposable
     {
@@ -227,7 +227,7 @@ namespace alivery
                 OrderId = oderId,
                 OrderStatus = (int)order.Status,
                 Status = 0,
-                OrderModelId = orderModel.OrderId
+                OrderModelId = orderModel.Id
             });
         }
 
