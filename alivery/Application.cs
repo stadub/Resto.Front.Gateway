@@ -1,11 +1,11 @@
 ﻿
 using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
+using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Reactive.Disposables;
+using System.Reflection;
 using System.Runtime.CompilerServices;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Alivery.Db;
@@ -16,6 +16,7 @@ using Resto.Front.Api.Data.Common;
 using Newtonsoft.Json;
 using Resto.Front.Api.Data.Kitchen;
 using Resto.Front.Api.Data.Orders;
+using OrderStatus = Alivery.Db.Model.OrderStatus;
 
 namespace alivery
 {
@@ -24,7 +25,6 @@ namespace alivery
 
         private ConfigDatabase configDb;
         private OrderDatabase orderDb;
-        MessageQueue messageQueue;
 
         private readonly CompositeDisposable resources = new CompositeDisposable();
 
@@ -36,15 +36,10 @@ namespace alivery
 
             var config = new ConfigRegistry(configDb.Configuration);
 
+            var file = System.Reflection.Assembly.GetExecutingAssembly();
 
-            config.SyncFromConfigFile();
-
-
-
-            config.OnFirstRun();
-
-            messageQueue = new MessageQueue(config.OrderMessageQueue, config.KitchenOrderMessageQueue, orderDb);
-
+            config.SyncFromConfigFile(file.Location);
+            
             resources.Add(Disposable.Create(Dispose));
         }
 
@@ -56,11 +51,33 @@ namespace alivery
             {
                 EntryPoint().Wait();
             });
+
+
+
             windowThread.SetApartmentState(ApartmentState.STA);
             windowThread.Start();
 
+            //restart messaging service in case of error
+            while (!disposed)
+            {
+                StartMessageService();
+            }
+
+
             PluginContext.Log.Info("CookingPriorityManager started");
             return this;
+        }
+
+        private void StartMessageService()
+        {
+            string assemblyPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+            Process process = new Process();
+            // Configure the process using the StartInfo properties.
+            process.StartInfo.FileName = $"{assemblyPath}\\service\\Alivery.MessageService.exe";
+            process.StartInfo.Arguments = "-n";
+            //process.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
+            process.Start();
+            process.WaitForExit();// Waits here for the process to exit.
         }
 
         private async Task EntryPoint()
@@ -88,41 +105,9 @@ namespace alivery
                     break;
 
 
-                await SendStatusUpdates();
+                await UpdateOrderStatus();
             }
             PluginContext.Log.Info("Exit...");
-
-        }
-
-
-
-        private async Task SendStatusUpdates()
-        {
-            var orders = PluginContext.Operations.GetOrders();
-            foreach (var order in orders)
-            {
-                var oderId = order.Id.ToString();
-                var orderTransactionMessages  = await orderDb.OrderStatusMessage.GetAllAsync(x => x.OrderId == oderId);
-
-                if (orderTransactionMessages.Any(x => x.Revision == order.Revision))
-                    continue;
-
-                var orderTransactions = await orderDb.Order.GetAllAsync(x => x.OrderId == oderId);
-
-                var initial = orderTransactions.Min(x => x.Revision);
-
-
-
-                await orderDb.OrderStatusMessage.AddAsync(new OrderStatusMessage
-                {
-                    Revision = order.Revision,
-                    OrderId = oderId,
-                    OrderStatus = (int) order.Status,
-                    Status = 0,
-                    OrderModelId = null
-                });
-            }
-            await messageQueue.SendStatusUpdatesAsync();
 
         }
 
@@ -133,11 +118,11 @@ namespace alivery
             foreach (IOrder order in orders)
             {
                 var oderId = order.Id.ToString();
-                var orderTransactions = await orderDb.Order.GetAllAsync(x => x.OrderId == oderId);
+                var orderTransactions = await orderDb.Order.GetAllAsync(x => x.IikoOrderId == oderId);
 
                 if(orderTransactions.Any(x =>x.Revision == order.Revision ))
                     continue;
-                StoreOrder(order);
+                await StoreOrder(order);
             }
         }
 
@@ -156,7 +141,6 @@ namespace alivery
             }
 
             await StoreOrder(order);
-            await messageQueue.SendStatusUpdatesAsync();
 
         }
         private async Task ReceiveKitchenOrderUpdate(EntityChangedEventArgs<IKitchenOrder> statusUpdate)
@@ -174,7 +158,6 @@ namespace alivery
             }
 
             await StoreKitchenOrder(order);
-            await messageQueue.SendStatusUpdatesAsync();
         }
 
         private async Task StoreKitchenOrder(IKitchenOrder order)
@@ -186,21 +169,17 @@ namespace alivery
             var orderModel = new KitchenOrder
             {
                 CookingPriority = order.CookingPriority,
-                OrderId = oderId,
                 Number = (int)order.Number,
                 BaseOrderId = order.BaseOrderId.ToString(),
                 Json = jsonString
             };
             await orderDb.KitchenOrder.AddAsync(orderModel);
 
-            await orderDb.KitchenOrderStatusMessage.AddAsync(new KitchenOrderStatusMessage
+            await orderDb.KitchenOrderTransmitStatus.AddAsync(new KitchenOrderTransmitStatus
             {
-                CookingPriority = order.CookingPriority,
-                OrderId = oderId,
-                Number = (int)order.Number,
-                BaseOrderId = order.BaseOrderId.ToString(),
-                Status = 0,
-                OrderModelId = orderModel.Id
+                Created = DateTime.Now,
+                TransmitStatus = TransmitStatus.Received,
+                KitchenOrderId = orderModel.Id
             });
         }
 
@@ -215,19 +194,17 @@ namespace alivery
                 Revision = order.Revision,
                 CloseTime = order.CloseTime,
                 OpenTime = order.OpenTime,
-                OrderId = oderId,
-                Status = (int)order.Status,
+                IikoOrderId = oderId,
+                OrderStatus = (OrderStatus) order.Status,
                 Json = jsonString
             };
             await orderDb.Order.AddAsync(orderModel);
 
-            await orderDb.OrderStatusMessage.AddAsync(new OrderStatusMessage
+            await orderDb.OrderTransmitStatus.AddAsync(new OrderTransmitStatus
             {
-                Revision = order.Revision,
-                OrderId = oderId,
-                OrderStatus = (int)order.Status,
-                Status = 0,
-                OrderModelId = orderModel.OrderId
+                Created = DateTime.Now,
+                TransmitStatus = TransmitStatus.Received,
+                OrderId = orderModel.Id
             });
         }
 
@@ -240,7 +217,6 @@ namespace alivery
                 return;
             configDb.Close();
             orderDb.Close();
-            messageQueue.Dispose();
             disposed = true;
         }
     }

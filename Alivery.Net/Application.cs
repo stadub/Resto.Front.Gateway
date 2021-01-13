@@ -4,7 +4,6 @@ using System.Reactive.Disposables;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
-using alivery;
 using Newtonsoft.Json;
 using Resto.Front.Api;
 using Resto.Front.Api.Data.Common;
@@ -107,7 +106,7 @@ namespace Alivery.Net
                 if (orderTransactionMessages.Any(x => x.Revision == order.Revision))
                     continue;
 
-                var orderTransactions = await orderDb.Order.GetAllAsync(x => x.OrderId == oderId);
+                var orderTransactions = await orderDb.Order.GetAllAsync(x => x.IikoOrderId == oderId);
 
                 var initial = orderTransactions.Min(x => x.Revision);
 
@@ -119,7 +118,7 @@ namespace Alivery.Net
                     OrderId = oderId,
                     OrderStatus = (int) order.Status,
                     Status = 0,
-                    OrderModelId = null
+                    IikoOrderId = null
                 });
             }
             await messageQueue.SendStatusUpdatesAsync();
@@ -133,7 +132,7 @@ namespace Alivery.Net
             foreach (IOrder order in orders)
             {
                 var oderId = order.Id.ToString();
-                var orderTransactions = await orderDb.Order.GetAllAsync(x => x.OrderId == oderId);
+                var orderTransactions = await orderDb.Order.GetAllAsync(x => x.IikoOrderId == oderId);
 
                 if(orderTransactions.Any(x =>x.Revision == order.Revision ))
                     continue;
@@ -215,8 +214,8 @@ namespace Alivery.Net
                 Revision = order.Revision,
                 CloseTime = order.CloseTime,
                 OpenTime = order.OpenTime,
-                OrderId = oderId,
-                Status = (int)order.Status,
+                IikoOrderId = oderId,
+                OrderStatus = (int)order.Status,
                 Json = jsonString
             };
             await orderDb.Order.AddAsync(orderModel);
@@ -227,7 +226,7 @@ namespace Alivery.Net
                 OrderId = oderId,
                 OrderStatus = (int)order.Status,
                 Status = 0,
-                OrderModelId = orderModel.Id
+                IikoOrderId = orderModel.Id
             });
         }
 

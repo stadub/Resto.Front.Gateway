@@ -1,5 +1,4 @@
-﻿using System.Net.Mime;
-using Resto.Front.Api;
+﻿using Resto.Front.Api;
 using Resto.Front.Api.Attributes;
 using Resto.Front.Api.Attributes.JetBrains;
 

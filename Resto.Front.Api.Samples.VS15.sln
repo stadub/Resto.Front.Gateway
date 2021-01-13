@@ -15,7 +15,11 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Alivery.Net", "Alivery.Net\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Alivery.Db", "Alivery.Db\Alivery.Db.csproj", "{ED4099F0-C99C-401C-8128-F7046BFF1306}"
 EndProject
-Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "Alivery.MsgService", "Alivery.MsgService\Alivery.MsgService.pyproj", "{C4E2EF6E-5CDA-4518-AC52-24A9F37FA344}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Alivery.MessageService", "Alivery.MessageService\Alivery.MessageService.csproj", "{BF59769B-E2E6-4E08-9E1B-353D5938450E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SQLiteLogger", "SQliteLogger\SQLiteLogger.csproj", "{5343C2C1-14DF-4980-B115-4C9E0BB8B505}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SqlBase", "SqlBase\SqlBase.csproj", "{032DBFC4-AAE8-4968-B81A-99A4569B56BC}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -47,8 +51,18 @@ Global
 		{ED4099F0-C99C-401C-8128-F7046BFF1306}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{ED4099F0-C99C-401C-8128-F7046BFF1306}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{ED4099F0-C99C-401C-8128-F7046BFF1306}.Release|Any CPU.Build.0 = Release|Any CPU
-		{C4E2EF6E-5CDA-4518-AC52-24A9F37FA344}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{C4E2EF6E-5CDA-4518-AC52-24A9F37FA344}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BF59769B-E2E6-4E08-9E1B-353D5938450E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BF59769B-E2E6-4E08-9E1B-353D5938450E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BF59769B-E2E6-4E08-9E1B-353D5938450E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BF59769B-E2E6-4E08-9E1B-353D5938450E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5343C2C1-14DF-4980-B115-4C9E0BB8B505}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5343C2C1-14DF-4980-B115-4C9E0BB8B505}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5343C2C1-14DF-4980-B115-4C9E0BB8B505}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5343C2C1-14DF-4980-B115-4C9E0BB8B505}.Release|Any CPU.Build.0 = Release|Any CPU
+		{032DBFC4-AAE8-4968-B81A-99A4569B56BC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{032DBFC4-AAE8-4968-B81A-99A4569B56BC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{032DBFC4-AAE8-4968-B81A-99A4569B56BC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{032DBFC4-AAE8-4968-B81A-99A4569B56BC}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

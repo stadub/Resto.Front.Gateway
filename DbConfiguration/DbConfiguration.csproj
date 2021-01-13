@@ -5,6 +5,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="System.Configuration.Abstractions" Version="2.0.2.45" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\SqliteDatabase\SqliteDatabase.csproj" />
   </ItemGroup>
 

@@ -1,9 +1,9 @@
 ﻿using DbConfiguration.Models;
-using SqliteDatabase;
+using SqlBase;
 
 namespace DbConfiguration
 {
-    public class ConfigDatabase: DatabaseBase
+    public class ConfigDatabase: SqliteDatabase.SqliteDatabase
     {
         public ConfigDatabase(string pass) : base("config", pass)
         {

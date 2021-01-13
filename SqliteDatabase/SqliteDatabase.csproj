@@ -1,11 +1,22 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="sqlite-net-pcl" Version="1.7.335" />
     <PackageReference Include="sqlite-net-sqlcipher" Version="1.7.335" />
+    <PackageReference Include="SQLitePCLRaw.bundle_e_sqlcipher" Version="2.0.4" />
+    <PackageReference Include="SQLitePCLRaw.bundle_green" Version="2.0.4" />
+    <PackageReference Include="SQLitePCLRaw.core" Version="2.0.4" />
+    <PackageReference Include="SQLitePCLRaw.lib.e_sqlcipher" Version="2.0.4" />
+    <PackageReference Include="SQLitePCLRaw.lib.sqlcipher.windows" Version="1.1.14" />
+    <PackageReference Include="SQLitePCLRaw.provider.dynamic_cdecl" Version="2.0.4" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\SqlBase\SqlBase.csproj" />
   </ItemGroup>
 
 </Project>

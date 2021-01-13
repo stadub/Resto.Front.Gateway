@@ -76,6 +76,8 @@
     <Compile Include="Model\MessageStatusBase.cs" />
     <Compile Include="Model\Order.cs" />
     <Compile Include="Model\OrderStatusMessage.cs" />
+    <Compile Include="Model\OrderTransmitStatus.cs" />
+    <Compile Include="Model\TransmitStatus.cs" />
     <Compile Include="OrderDatabase.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
@@ -84,6 +86,10 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\SqlBase\SqlBase.csproj">
+      <Project>{032DBFC4-AAE8-4968-B81A-99A4569B56BC}</Project>
+      <Name>SqlBase</Name>
+    </ProjectReference>
     <ProjectReference Include="..\SqliteDatabase\SqliteDatabase.csproj">
       <Project>{ABF6BA51-6AE7-47D7-8C63-906807891765}</Project>
       <Name>SqliteDatabase</Name>

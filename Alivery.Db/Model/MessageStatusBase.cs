@@ -1,9 +1,13 @@
-﻿using SqliteDatabase;
+﻿using SqlBase;
+using SQLite;
 
 namespace Alivery.Db.Model
 {
-    public class MessageStatusBase: ValueObject
+    public class MessageStatusBase : IValueObject
     {
-        public int Status { get; set; }
+        [PrimaryKey]
+        public string Id { get; set; }
+
+        public string Json { get; set; }
     }
 }

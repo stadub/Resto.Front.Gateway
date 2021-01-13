@@ -1,11 +1,14 @@
 ﻿using System;
+using SqlBase;
 using SQLite;
-using SqliteDatabase;
 
 namespace Alivery.Db.Model
 {
-    public class KitchenOrder : ValueObject
+    public class KitchenOrder : IValueObject
     {
+        [PrimaryKey]
+        public string Id { get; set; }
+
         [Indexed]
         public string Json { get; set; }
         public int Status { get; set; }
@@ -14,9 +17,6 @@ namespace Alivery.Db.Model
         public int Revision { get; set; }
         public DateTime OpenTime { get; set; }
         public DateTime? CloseTime { get; set; }
-
-        [Indexed]
-        public string OrderId { get; set; }
 
 
         public int Number { get; set; }
@@ -28,5 +28,25 @@ namespace Alivery.Db.Model
         [Indexed]
         public string BaseOrderId { get; set; }
 
+
+        [Indexed]
+        public string IikoOrderId { get; set; }
+
+    }
+
+    public class KitchenOrderTransmitStatus : IValueObject
+    {
+        [PrimaryKey]
+        public string Id { get; set; }
+
+        [Indexed]
+        public string KitchenOrderId { get; set; }
+
+        public TransmitStatus TransmitStatus { get; set; }
+
+        public DateTime Created { get; set; }
+
+        public int IsObsolete { get; set; }
+        public string KitchenOrderStatusMsgId { get; set; }
     }
 }

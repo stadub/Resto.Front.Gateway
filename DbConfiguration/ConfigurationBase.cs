@@ -2,7 +2,7 @@
 using System.ComponentModel;
 using System.Threading.Tasks;
 using DbConfiguration.Models;
-using SqliteDatabase;
+using SqlBase;
 
 namespace DbConfiguration
 {
@@ -57,7 +57,7 @@ namespace DbConfiguration
                 Id = ConfigType + option,
                 Value = TypeDescriptor.GetConverter(typeof(T)).ConvertToString(value)
             });
-            if (result != 1)
+            if (result ==null)
                 throw new Exception("Fatal:Unable to write config");
         }
 
