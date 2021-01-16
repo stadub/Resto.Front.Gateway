@@ -23,23 +23,27 @@ namespace alivery
     public class Application:IDisposable
     {
 
-        private ConfigDatabase configDb;
+       
         private OrderDatabase orderDb;
+        ConfigDatabase configDb;
+        ConfigRegistry config;
 
         private readonly CompositeDisposable resources = new CompositeDisposable();
 
         public Application()
         {
-            configDb = new ConfigDatabase("суперсекретный пароль");
-            orderDb = new OrderDatabase();
+            configDb = new ConfigDatabase("appService.cfg","суперсекретный пароль1");
             configDb.Open();
 
-            var config = new ConfigRegistry(configDb.Configuration);
+            config = new ConfigRegistry(configDb.Configuration);
 
-            var file = System.Reflection.Assembly.GetExecutingAssembly();
+
+            var file = Assembly.GetExecutingAssembly();
 
             config.SyncFromConfigFile(file.Location);
-            
+
+            orderDb = new OrderDatabase(config.Application.OrderDbPath);
+
             resources.Add(Disposable.Create(Dispose));
         }
 
@@ -73,7 +77,10 @@ namespace alivery
             string assemblyPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
             Process process = new Process();
             // Configure the process using the StartInfo properties.
-            process.StartInfo.FileName = $"{assemblyPath}\\service\\Alivery.MessageService.exe";
+
+            var path = config.Application.MsgServicePath;
+
+            process.StartInfo.FileName = path;
             process.StartInfo.Arguments = "-n";
             //process.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
             process.Start();
@@ -215,7 +222,7 @@ namespace alivery
         {
             if (disposed)
                 return;
-            configDb.Close();
+            //configDb.Close();
             orderDb.Close();
             disposed = true;
         }

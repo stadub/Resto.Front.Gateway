@@ -1,0 +1,67 @@
+﻿syntax = "proto3";
+
+option csharp_namespace = "AliveryNamedPipes";
+
+package transfer;
+
+service AliveryService {
+	rpc UpdateOrder (OrderRequest) returns (Response) {}
+	rpc UpdateOrdersList (OrdersListRequest) returns (Response) {}
+
+	rpc DelayedUnary (RequestMessage) returns (Response) {}
+	rpc ThrowingUnary (RequestMessage) returns (Response) {}
+	rpc DelayedThrowingUnary (RequestMessage) returns (Response) {}
+	rpc ClientStreaming (stream RequestMessage) returns (Response) {}
+	rpc ServerStreaming (RequestMessage) returns (stream Response) {}
+	rpc DelayedServerStreaming (RequestMessage) returns (stream Response) {}
+	rpc DuplexStreaming (stream RequestMessage) returns (stream Response) {}
+	rpc DelayedDuplexStreaming (stream RequestMessage) returns (stream Response) {}
+	rpc HeadersTrailers (RequestMessage) returns (Response) {}
+	rpc SetStatus (RequestMessage) returns (Response) {}
+}
+
+
+message RequestMessage {
+	int32 value = 1;
+	bytes binary = 2;
+}
+
+
+message OrderResponse {
+	message Result {
+		string url = 1;
+		string title = 2;
+		repeated string snippets = 3;
+	}
+	repeated Result results = 1;
+}
+
+message Response {
+	int32 ResponseCode = 1;
+	bytes Message = 2;
+}
+
+
+message OrderRequest 
+{
+	string Id =1;
+	string IikoOrderId =2;
+	string Json =3;
+
+	enum OrderStatus {
+		New =0;
+		Bill =1;
+		Closed =2;
+		Deleted =3;
+	}
+
+	OrderStatus Status =4;
+	int32 Revision =5;
+	
+	int64 OpenTime =20;
+	int64 CloseTime =21;
+
+}
+message OrdersListRequest{
+	repeated OrderRequest Orders = 3;
+}

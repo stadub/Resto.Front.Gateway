@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using alivery;
@@ -22,13 +23,16 @@ namespace Alivery.MessageService
             this.logger = logger;
 
             configDb = new ConfigDatabase("суперсекретный пароль");
-            orderDb = new OrderDatabase();
             configDb.Open();
 
             var config = new ConfigRegistry(configDb.Configuration);
+            //var config = new ConfigRegistry("msgService.cfg","суперсекретный пароль2");
 
-            //config.SyncFromConfigFile();
-            //config.OnFirstRun();
+            var file = Assembly.GetExecutingAssembly();
+            config.SyncFromConfigFile(file.Location);
+            config.OnFirstRun();
+
+            orderDb = new OrderDatabase(config.Application.OrderDbPath);
 
             messageQueue = new MessageQueue(config.OrderMessageQueue, config.KitchenOrderMessageQueue, orderDb);
 
@@ -51,7 +55,8 @@ namespace Alivery.MessageService
 
             orderDb.Open();
 
-           
+
+
             while (true)
             {
                 await Task.Delay(1000);

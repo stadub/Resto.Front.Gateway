@@ -22,6 +22,7 @@ namespace Alivery.MessageService
         public async Task CreateOrderInfoAsync()
         {
             var ordersToSend = await orderDb.OrderTransmitStatus.GetAllAsync(order => order.TransmitStatus == TransmitStatus.Received || order.TransmitStatus == TransmitStatus.Unknown);
+            OrderStatusMessage orderMsg;
 
             foreach (var orderToSend in ordersToSend)
             {
@@ -29,23 +30,34 @@ namespace Alivery.MessageService
 
                 var order = await orderDb.Order.GetByIdAsync(oderId);
 
-                var orderTransactionMessages = await orderDb.OrderStatusMessage.GetAllAsync(x => x.OrderId == order.IikoOrderId);
+                var orderTransactionMessages = await orderDb.OrderStatusMessage.GetAllAsync(x => x.IikoOrderId == order.IikoOrderId);
 
                 //first status update for order
-                if (orderTransactionMessages == null)
+                if (orderTransactionMessages == null  || !orderTransactionMessages.Any() )
                 {
-                    await orderDb.OrderStatusMessage.AddAsync(new OrderStatusMessage
+                    orderMsg = await orderDb.OrderStatusMessage.AddAsync(new OrderStatusMessage
                     {
                         Revision = order.Revision,
-                        OrderId = order.IikoOrderId,
+                        OrderId = oderId,
                         OrderStatus = order.OrderStatus,
-                        IikoOrderId = null,
+                        IikoOrderId = order.IikoOrderId,
                         Json = order.Json
                     });
+
+                    orderToSend.OrderStatusMsgId = orderMsg.Id;
+                    orderToSend.TransmitStatus = TransmitStatus.ReadyToSend;
+
+                    await orderDb.OrderTransmitStatus.UpdateAsync(orderToSend);
                     continue;
                 }
 
-
+                var  woJson = orderTransactionMessages.Where(message => message.Json == null).ToList();
+                foreach (var orderStatusMessage in woJson)
+                {
+                    var order1 = await orderDb.Order.GetByIdAsync(orderStatusMessage.OrderId);
+                    orderStatusMessage.Json = order1.Json;
+                    await orderDb.OrderStatusMessage.UpdateAsync(orderStatusMessage);
+                }
                 //already has latest revision
                 if (orderTransactionMessages.Any(x => x.Revision == order.Revision))
                     continue;
@@ -59,7 +71,7 @@ namespace Alivery.MessageService
                 var latestJson = JToken.Parse(order.Json);
 
                 var diffJson = JsonDifferentiator.Differentiate(initialJson, latestJson);
-                var orderMsg = await orderDb.OrderStatusMessage.AddAsync(new OrderStatusMessage
+                orderMsg = await orderDb.OrderStatusMessage.AddAsync(new OrderStatusMessage
                 {
                     Revision = order.Revision,
                     OrderId = order.IikoOrderId,

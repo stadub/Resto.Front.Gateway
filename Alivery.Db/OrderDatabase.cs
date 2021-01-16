@@ -6,7 +6,7 @@ namespace Alivery.Db
     //todo: split to 3 db: order, order status, order message to make access operations more atomic
     public class OrderDatabase : SqliteDatabase.SqliteDatabase
     {
-        public OrderDatabase() : base("alivery", "Сорок два!")
+        public OrderDatabase(string databasePath) : base(databasePath, null)
         {
             Order = RegisterTable<Order> ( );
             OrderTransmitStatus = RegisterTable<OrderTransmitStatus> ( );

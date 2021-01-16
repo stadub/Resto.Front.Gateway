@@ -6,15 +6,21 @@ using SqlBase;
 
 namespace DbConfiguration
 {
+
     public class ConfigurationBase
     {
-        private readonly IRepository<ConfigurationModel> db;
-        public string ConfigType { get; }
+        protected IRepository<ConfigurationModel> db;
+        public string ConfigType { get; protected set; }
 
-        public ConfigurationBase(IRepository<ConfigurationModel> db, string configType)
+        public ConfigurationBase( string configType)
+        {
+            ConfigType = configType;
+        }
+
+        public ConfigurationBase Initialize(IRepository<ConfigurationModel> db)
         {
             this.db = db;
-            ConfigType = configType;
+            return this;
         }
 
         protected async Task<T> ReadConfigAsync<T>(string option, T defaultValue=default)

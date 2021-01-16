@@ -17,11 +17,8 @@ namespace alivery
         private readonly MessageQueueConfiguration orderConfig;
         private readonly MessageQueueConfiguration korderConfig;
         private readonly OrderDatabase orderDb;
-        private readonly IRepository<OrderStatusMessage> msgRepo;
-        private readonly IRepository<Order> orderRepo;
-        IModel channel;
-        string queueName;
-        static SemaphoreSlim semaphoreSlim = new SemaphoreSlim(1, 1);
+
+        static SemaphoreSlim _semaphoreSlim = new SemaphoreSlim(1, 1);
         KitchenOrderStatusService kitchenOrderStatusService;
         OrderStatusService orderStatusService;
 
@@ -34,9 +31,8 @@ namespace alivery
             kitchenOrderStatusService = new KitchenOrderStatusService(orderDb);
             orderStatusService = new OrderStatusService(orderDb);
             this.orderDb = orderDb;
-            this.msgRepo = orderDb.OrderStatusMessage;
-            this.orderRepo = orderDb.Order;
         }
+
 
 
         public class Message
@@ -85,7 +81,7 @@ namespace alivery
         //                //    sslConfigurator.
         //                //});
         //            });
-                
+
         //        //sbc.ReceiveEndpoint("test_queue", ep =>
         //        //{
         //        //    ep.Handler<Message>(context =>
@@ -105,7 +101,7 @@ namespace alivery
         //    await bus.StopAsync();
         //}
 
-        public void SendTest()
+        public async Task SendOrderUpdatesAsync<T>(List<T> updates) where T : MessageStatusBase
         {
             var factory = new ConnectionFactory()
             {
@@ -118,83 +114,54 @@ namespace alivery
             using (var connection = factory.CreateConnection())
             using (var channel = connection.CreateModel())
             {
-                channel.QueueDeclare(queue: "hello",
+                channel.QueueDeclare(queue: "q.front.korders",
                     durable: false,
                     exclusive: false,
                     autoDelete: false,
                     arguments: null);
 
-                string message = "Hello World!";
-                var body = Encoding.UTF8.GetBytes(message);
+                foreach (var update in updates)
+                {
+                    var oderId = update.Id.ToString();
 
-                channel.BasicPublish(exchange: "",
-                    routingKey: "hello",
-                    basicProperties: null,
-                    body: body);
-                Console.WriteLine(" [x] Sent {0}", message);
+                    string message = JsonConvert.SerializeObject(update.Json);
+                    var body = Encoding.UTF8.GetBytes(message);
+
+                    channel.BasicPublish(exchange: "",
+                        routingKey: "q.front.korders",
+                        basicProperties: null,
+                        body: body);
+                    Console.WriteLine(" [x] Sent {0}", message);
+                }
+
             }
-
-            Console.WriteLine(" Press [enter] to exit.");
-            Console.ReadLine();
         }
 
 
-        public void Start(MessageQueueConfiguration config)
+        public (IConnection connection, IModel channel) Start(MessageQueueConfiguration config)
         {
-           // Main().Wait();
-            SendTest();
+            var userName = config.UserName;
+            var password = config.Password;
+            var hostName = config.HostName;
+            var port = config.Port;
 
-               ConnectionFactory factory = new ConnectionFactory();
-            factory.UserName = "test";
-            factory.Password = "test";
-            //factory.VirtualHost = "/";
-            //factory..Protocol = Protocols.FromEnvironment();
-            factory.HostName = "185-167-96-77.cloud-xip.io";
-            //factory.Port = AmqpTcpEndpoint.UseDefaultPort;
-            IConnection conn = factory.CreateConnection();
-
-            string UserName = config.UserName;
-            string Password = config.Password;
-            string HostName = config.HostName;
-
-            var factory1 = new ConnectionFactory()
+            var factory = new ConnectionFactory()
             {
-                HostName = HostName,
-                UserName = UserName,
-                Password = Password,
-
-                //HostName = config.HostName,
-                //UserName = config.UserName,
-
-                //Password = config.Password,
-                VirtualHost = "/",
-                Port = 15671// AmqpTcpEndpoint.UseDefaultPort
+                HostName = hostName,
+                UserName = userName,
+                Password = password,
+                Port = port,
+                VirtualHost = "/"
             };
-            queueName = config.QueueName;
-            
+
             var connection = factory.CreateConnection();
-            channel = connection.CreateModel();
-            var properties = channel.CreateBasicProperties();
-
-            properties.Persistent = false;
-
-            byte[] messagebuffer = Encoding.Default.GetBytes("Message from Topic Exchange 'Bombay' ");
-            channel.BasicPublish("topic.exchange", "Message.korders.Email", properties, messagebuffer);
-            //channel.BasicPublish(queueName, "Message.Bombay.Email", properties, messagebuffer);
+            var channel = connection.CreateModel();
 
 
-            channel.QueueDeclare(queue: queueName,
-                durable: false,
-                exclusive: false,
-                autoDelete: false,
-                arguments: null);
-        }
-        public void Stop()
-        {
-            channel.Dispose();
+            return (connection, channel);
         }
 
-      
+
 
         public async Task SendStatusUpdatesAsync()
         {
@@ -203,63 +170,92 @@ namespace alivery
         }
         public async Task SendOrderStatusUpdatesAsync()
         {
-            await semaphoreSlim.WaitAsync();
+            await _semaphoreSlim.WaitAsync();
 
             var orderMessages = await orderStatusService.GetOrderInfoAsync();
+
+            IConnection connection = null;
+            IModel channel = null;
             try
             {
-                Start(orderConfig);
+                var queueName = orderConfig.QueueName;
+
+                (connection, channel) = Start(orderConfig);
+
+                channel.QueueDeclare(queue: queueName,
+                    durable: false,
+                    exclusive: false,
+                    autoDelete: false,
+                    arguments: null);
+
                 foreach (var message in orderMessages)
                 {
-                    await SendOrderUpdateAsync(message.msg);
-                    message.transmitStatus.TransmitStatus=TransmitStatus.Sent;
+                    await SendOrderUpdateAsync(message.msg, queueName, channel);
+                    message.transmitStatus.TransmitStatus = TransmitStatus.Sent;
 
                     await orderDb.OrderTransmitStatus.UpdateAsync(message.transmitStatus);
                 }
-               
-                Stop();
-
+                
             }
             catch (Exception e)
             {
                 //PluginContext.Log.Error("Error sending status", e);
 
             }
+            finally
+            {
+                channel?.Close();
+                connection?.Close();
+            }
 
-            semaphoreSlim.Release();
+            _semaphoreSlim.Release();
         }
 
         public async Task SendKitchenOrderStatusUpdatesAsync()
         {
-            await semaphoreSlim.WaitAsync();
+            await _semaphoreSlim.WaitAsync();
 
             var kOrderMessages = await kitchenOrderStatusService.GetKitchenOrderInfoAsync();
+
+            IConnection connection = null;
+            IModel channel = null;
             try
             {
-                Start(korderConfig);
-               
+                var queueName = korderConfig.QueueName;
+
+                (connection, channel) = Start(korderConfig);
+
+                channel.QueueDeclare(queue: queueName,
+                    durable: false,
+                    exclusive: false,
+                    autoDelete: false,
+                    arguments: null);
+
                 foreach (var message in kOrderMessages)
                 {
-                    await SendOrderUpdateAsync(message.msg);
+                    await SendOrderUpdateAsync(message.msg, queueName, channel);
+
                     message.transmitStatus.TransmitStatus = TransmitStatus.Sent;
 
                     await orderDb.KitchenOrderTransmitStatus.UpdateAsync(message.transmitStatus);
 
                 }
-                Stop();
-
             }
             catch (Exception e)
             {
                 //PluginContext.Log.Error("Error sending status", e);
 
             }
-
-            semaphoreSlim.Release();
+            finally
+            {
+                channel?.Close();
+                connection?.Close();
+            }
+            _semaphoreSlim.Release();
         }
 
 
-        public async Task SendOrderUpdateAsync<T>(T order) where T: MessageStatusBase
+        public async Task SendOrderUpdateAsync<T>(T order, string queueName, IModel channel) where T: MessageStatusBase
         {
             var oderId = order.Id.ToString();
 
@@ -275,7 +271,6 @@ namespace alivery
 
         public void Dispose()
         {
-            channel?.Dispose();
         }
 
         public async Task CreateOrderMsg()

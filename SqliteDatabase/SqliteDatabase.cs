@@ -8,11 +8,13 @@ namespace SqliteDatabase
     {
         private SQLiteConnectionString options;
 
-        public SqliteDatabase(string name, string password) : base(name, password)
+        public SqliteDatabase(string databasePath, string password) : base(databasePath, password)
         {
-            var curDir = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
-            var databasePath = Path.Combine(curDir, name + ".db");
-
+            if (!databasePath.Contains("\\"))
+            {
+                var curDir = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
+                databasePath = Path.Combine(curDir, databasePath + ".db");
+            }
 
             options = new SQLiteConnectionString(databasePath, true,
                 key: password,

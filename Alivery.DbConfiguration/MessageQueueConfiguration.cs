@@ -32,7 +32,13 @@ namespace alivery
             set => WriteConfig("QueueName", value);
         }
 
-        public MessageQueueConfiguration(IRepository<ConfigurationModel> db, string configType) : base(db, configType)
+        public int Port
+        {
+            get => ReadConfig<int>("Port");
+            set => WriteConfig("Port", value);
+        }
+
+        public MessageQueueConfiguration(string configType) : base( configType)
         {
         }
     }

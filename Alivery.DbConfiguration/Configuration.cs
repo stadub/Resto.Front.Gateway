@@ -7,19 +7,41 @@ namespace alivery
 {
     public class ConfigRegistry: AppConfigurationBase
     {
-        public ConfigRegistry(IRepository<ConfigurationModel> db) : base(db)
+        private readonly ConfigDatabase database;
+        private bool disposed;
+
+        public ConfigRegistry(string pass, string name) : base(null)
         {
-
-            OrderMessageQueue= base.RegisterConfigSection( ()=>new MessageQueueConfiguration(db, "Order"));
-            KitchenOrderMessageQueue = base.RegisterConfigSection( ()=>new MessageQueueConfiguration(db, "KitchenOrder"));
-            Application = base.RegisterConfigSection( ()=>new AppConfiguration(db));
-
-            //SyncFromConfigFile();
+            this.database =  new ConfigDatabase(pass, name);
+            repository = database.Configuration;
+            RegisterConfigSections();
         }
 
-        public MessageQueueConfiguration OrderMessageQueue { get; }
-        public MessageQueueConfiguration KitchenOrderMessageQueue { get; }
-        public AppConfiguration Application { get; }
+        public ConfigRegistry(ConfigDatabase db) : this(db.Configuration)
+        {
+            this.database = db;
+            repository = database.Configuration;
+        }
+
+
+        public ConfigRegistry(IRepository<ConfigurationModel> repository) : base(repository)
+        {
+            //SyncFromConfigFile();
+            RegisterConfigSections();
+        }
+
+        private void RegisterConfigSections()
+        {
+
+            OrderMessageQueue = base.RegisterConfigSection<MessageQueueConfiguration>("Order");
+
+            KitchenOrderMessageQueue = base.RegisterConfigSection<MessageQueueConfiguration>("KitchenOrder");
+            Application = base.RegisterConfigSection<AppConfiguration>();
+        }
+
+        public MessageQueueConfiguration OrderMessageQueue { get; private set; }
+        public MessageQueueConfiguration KitchenOrderMessageQueue { get; private set; }
+        public AppConfiguration Application { get; private set; }
 
         public void OnFirstRun()
         {
@@ -30,5 +52,13 @@ namespace alivery
             }
         }
 
+        
+
+        protected override void ReleaseUnmanagedResources()
+        {
+            if (disposed) return;
+            database?.Close();
+            disposed = true;
+        }
     }
 }

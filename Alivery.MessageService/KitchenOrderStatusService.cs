@@ -22,6 +22,7 @@ namespace Alivery.MessageService
         public async Task CreateKitchenOrderInfoAsync()
         {
             var kitchenOrdersToSend = await kitchenOrderDb.KitchenOrderTransmitStatus.GetAllAsync(KitchenOrder => KitchenOrder.TransmitStatus == TransmitStatus.Received || KitchenOrder.TransmitStatus == TransmitStatus.Unknown);
+            KitchenOrderStatusMessage KitchenOrderMsg;
 
             foreach (var kitchenOrderToSend in kitchenOrdersToSend)
             {
@@ -34,14 +35,18 @@ namespace Alivery.MessageService
                 //first status update for KitchenOrder
                 if (kitchenOrderTransactionMessages == null)
                 {
-                    await kitchenOrderDb.KitchenOrderStatusMessage.AddAsync(new KitchenOrderStatusMessage
+                    KitchenOrderMsg = await kitchenOrderDb.KitchenOrderStatusMessage.AddAsync(new KitchenOrderStatusMessage
                     {
                         Revision = kitchenOrder.Revision,
-                        OrderId = kitchenOrder.IikoOrderId,
+                        OrderId = oderId,
                         OrderStatus = kitchenOrder.Status,
-                        IikoOrderId = null,
+                        IikoOrderId = kitchenOrder.IikoOrderId,
                         Json = kitchenOrder.Json
                     });
+                    kitchenOrderToSend.KitchenOrderStatusMsgId = KitchenOrderMsg.Id;
+                    kitchenOrderToSend.TransmitStatus = TransmitStatus.ReadyToSend;
+
+                    await kitchenOrderDb.KitchenOrderTransmitStatus.UpdateAsync(kitchenOrderToSend);
                     continue;
                 }
 
@@ -59,7 +64,7 @@ namespace Alivery.MessageService
                 var latestJson = JToken.Parse(kitchenOrder.Json);
 
                 var diffJson = JsonDifferentiator.Differentiate(initialJson, latestJson);
-                var KitchenOrderMsg = await kitchenOrderDb.KitchenOrderStatusMessage.AddAsync(new KitchenOrderStatusMessage
+                KitchenOrderMsg = await kitchenOrderDb.KitchenOrderStatusMessage.AddAsync(new KitchenOrderStatusMessage
                 {
                     Revision = kitchenOrder.Revision,
                     OrderId = kitchenOrder.IikoOrderId,
