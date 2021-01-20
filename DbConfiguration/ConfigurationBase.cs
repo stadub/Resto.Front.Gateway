@@ -1,10 +1,10 @@
 ﻿using System;
 using System.ComponentModel;
 using System.Threading.Tasks;
-using DbConfiguration.Models;
 using SqlBase;
+using Utils.Models;
 
-namespace DbConfiguration
+namespace Utils
 {
 
     public class ConfigurationBase

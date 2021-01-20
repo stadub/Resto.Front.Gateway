@@ -20,7 +20,6 @@ service AliveryService {
 	rpc SetStatus (RequestMessage) returns (Response) {}
 }
 
-
 message RequestMessage {
 	int32 value = 1;
 	bytes binary = 2;

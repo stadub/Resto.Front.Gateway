@@ -4,10 +4,10 @@ using System.Collections.Specialized;
 using System.Configuration;
 using System.Diagnostics;
 using System.Xml;
-using DbConfiguration.Models;
 using SqlBase;
+using Utils.Models;
 
-namespace DbConfiguration
+namespace Utils
 {
     public class AppConfigurationBase:IDisposable
     {

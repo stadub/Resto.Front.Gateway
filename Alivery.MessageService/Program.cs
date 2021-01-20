@@ -1,65 +1,69 @@
 ﻿using System;
 using System.Reflection;
-using System.Runtime.InteropServices;
-using System.Threading;
+using System.Text.Json;
+using System.Threading.Tasks;
 using alivery;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+
+using Microsoft.Extensions.Logging.Console;
+using Utils;
 
 namespace Alivery.MessageService
 {
     class Program
     {
+
+        //static Task Main(string[] args) =>
+        //    CreateHostBuilder(args).Build().RunAsync();
+
+
+        //static IHostBuilder CreateHostBuilder(string[] args) =>
+        //    Host.CreateDefaultBuilder(args)
+        //        .ConfigureWebHostDefaults(builder => builder.UseStartup<Startup>())
+        //        .ConfigureLogging(builder =>
+        //            builder.AddJsonConsole(options =>
+        //            {
+        //                options.IncludeScopes = false;
+        //                options.TimestampFormat = "hh:mm:ss ";
+        //                options.JsonWriterOptions = new JsonWriterOptions
+        //                {
+        //                    Indented = true
+        //                };
+        //            }));
+
         static void Main(string[] args)
         {
-            ILogger logger= NullLogger.Instance;
-            Exclusive(() =>
-            {
-                new Application(logger).Start();
-                Thread.Sleep(TimeSpan.FromSeconds(5));
+            using ILoggerFactory loggerFactory =
+                LoggerFactory.Create(builder =>
+                    builder.AddSimpleConsole(options =>
+                    {
+                        options.IncludeScopes = true;
+                        options.SingleLine = true;
+                        options.TimestampFormat = "hh:mm:ss ";
+                    }));
 
-            });
+            ILogger<Program> logger = loggerFactory.CreateLogger<Program>();
+
+
+            using var configDb = new ConfigDatabase("суперсекретный пароль");
+            configDb.OpenAsync().Wait();
+
+            var config = new ConfigRegistry(configDb.Configuration);
+            //var config = new ConfigRegistry("msgService.cfg","суперсекретный пароль2");
+
+            var file = Assembly.GetExecutingAssembly();
+            config.SyncFromConfigFile(file.Location);
+            config.OnFirstRun();
+
+
+            //Runtime.Exclusive(config.Application.SelfId,() =>
+            //{
+                new Application(config, logger).EntryPoint().Wait();
+
+            //});
         }
 
-        protected static void Exclusive(Action action)
-        {
-            string mutexId = $"Global\\{{{AppId()}}}";
-
-
-            using var mutex = new Mutex(false, mutexId, out var createdNew);
-            // edited by acidzombie24
-            var hasHandle = false;
-            try
-            {
-                try
-                {
-                    hasHandle = mutex.WaitOne(5000, false);
-                    if (hasHandle == false)
-                        throw new TimeoutException("Timeout waiting for exclusive access");
-                }
-                catch (AbandonedMutexException)
-                {
-                    // Log the fact that the mutex was abandoned in another process,
-                    // it will still get acquired
-                    hasHandle = true;
-                }
-
-                action();
-            }
-            finally
-            {
-                if (hasHandle)
-                    mutex.ReleaseMutex();
-            }
-        }
-
-        protected static string AppId()
-        {
-            var assembly = Assembly.GetExecutingAssembly();
-
-            var appGuid = assembly.GetCustomAttribute<AssemblyTitleAttribute>().Title;
-
-            return appGuid;
-        }
+        
     }
 }

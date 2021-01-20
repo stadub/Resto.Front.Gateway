@@ -12,14 +12,8 @@ namespace Alivery.MessageService
 {
     class KitchenOrderStatusService
     {
-        private OrderDatabase kitchenOrderDb;
 
-        public KitchenOrderStatusService(OrderDatabase KitchenOrderDatabase)
-        {
-            kitchenOrderDb = KitchenOrderDatabase;
-        }
-
-        public async Task CreateKitchenOrderInfoAsync()
+        public async Task CreateKitchenOrderInfoAsync(OrderDatabase kitchenOrderDb)
         {
             var kitchenOrdersToSend = await kitchenOrderDb.KitchenOrderTransmitStatus.GetAllAsync(KitchenOrder => KitchenOrder.TransmitStatus == TransmitStatus.Received || KitchenOrder.TransmitStatus == TransmitStatus.Unknown);
             KitchenOrderStatusMessage KitchenOrderMsg;
@@ -33,13 +27,11 @@ namespace Alivery.MessageService
                 var kitchenOrderTransactionMessages = await kitchenOrderDb.KitchenOrderStatusMessage.GetAllAsync(x => x.IikoOrderId== kitchenOrder.IikoOrderId);
 
                 //first status update for KitchenOrder
-                if (kitchenOrderTransactionMessages == null)
+                if (kitchenOrderTransactionMessages == null || !kitchenOrderTransactionMessages.Any())
                 {
                     KitchenOrderMsg = await kitchenOrderDb.KitchenOrderStatusMessage.AddAsync(new KitchenOrderStatusMessage
                     {
-                        Revision = kitchenOrder.Revision,
                         OrderId = oderId,
-                        OrderStatus = kitchenOrder.Status,
                         IikoOrderId = kitchenOrder.IikoOrderId,
                         Json = kitchenOrder.Json
                     });
@@ -50,26 +42,31 @@ namespace Alivery.MessageService
                     continue;
                 }
 
-
-                //already has latest revision
-                if (kitchenOrderTransactionMessages.Any(x => x.Revision == kitchenOrder.Revision))
+                //no revision changes found
+                if (kitchenOrderTransactionMessages.Count == 1) 
                     continue;
 
-                var initialRevision = kitchenOrderTransactionMessages.Min(x => x.Revision);
+               
+
+                //var initialRevision = kitchenOrderTransactionMessages.Min(x => x.Revision);
 
 
-                var initial = kitchenOrderTransactionMessages.Find(message => message.Revision == initialRevision);
+                var initial = kitchenOrderTransactionMessages.First();
 
                 var initialJson = JToken.Parse(initial.Json);
                 var latestJson = JToken.Parse(kitchenOrder.Json);
 
                 var diffJson = JsonDifferentiator.Differentiate(initialJson, latestJson);
+
+                //no revision changes found
+                if (diffJson == null || !diffJson.HasValues)
+                    continue; ;
+
+
                 KitchenOrderMsg = await kitchenOrderDb.KitchenOrderStatusMessage.AddAsync(new KitchenOrderStatusMessage
                 {
-                    Revision = kitchenOrder.Revision,
-                    OrderId = kitchenOrder.IikoOrderId,
-                    OrderStatus = kitchenOrder.Status,
-                    IikoOrderId = null,
+                    OrderId = oderId,
+                    IikoOrderId = kitchenOrder.IikoOrderId,
                     Json = diffJson.ToString()
                 });
 
@@ -83,7 +80,7 @@ namespace Alivery.MessageService
 
         }
 
-        public async Task<List<(KitchenOrderTransmitStatus transmitStatus, KitchenOrderStatusMessage msg)>> GetKitchenOrderInfoAsync()
+        public async Task<List<(KitchenOrderTransmitStatus transmitStatus, KitchenOrderStatusMessage msg)>> GetKitchenOrderInfoAsync(OrderDatabase kitchenOrderDb)
         {
             var KitchenOrdersToSend = await kitchenOrderDb.KitchenOrderTransmitStatus.GetAllAsync(KitchenOrder => KitchenOrder.TransmitStatus == TransmitStatus.ReadyToSend);
 

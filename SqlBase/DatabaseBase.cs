@@ -1,9 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace SqlBase
 {
-    public abstract class DatabaseBase<TDatabase>:IDisposable
+    public abstract class DatabaseBase<TDatabase>:IDisposable, IAsyncDisposable
     {
         private bool disposed;
         protected TDatabase Connection { get; private set; }
@@ -17,18 +18,20 @@ namespace SqlBase
         }
 
 
-        public void Open()
+        public async Task<IDisposable> OpenAsync()
         {
             // Get an absolute path to the database file
-            Connection = CreateConnection();
+            Connection = await CreateConnectionAsync();
 
             foreach (var table in Tables)
             {
-                table.Value.InitAsync(Connection);
+                await table.Value.InitAsync(Connection);
             }
+
+            return this;
         }
 
-        protected abstract TDatabase CreateConnection();
+        protected abstract Task<TDatabase> CreateConnectionAsync();
 
 
         protected IRepository<TValue> RegisterTable<TValue>() where TValue : IValueObject, new()
@@ -55,6 +58,13 @@ namespace SqlBase
             disposed = true;
         }
 
+        protected virtual async Task DisposeConnectionAsync()
+        {
+            if (disposed)
+                return;
+            disposed = true;
+        }
+
         public void Dispose()
         {
             if (disposed)
@@ -64,5 +74,12 @@ namespace SqlBase
             disposed = true;
 
         }
+
+        public async ValueTask DisposeAsync()
+        {
+            await DisposeConnectionAsync();
+        }
+
+
     }
 }

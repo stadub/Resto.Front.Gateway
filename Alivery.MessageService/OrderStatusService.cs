@@ -12,14 +12,9 @@ namespace Alivery.MessageService
 {
     class OrderStatusService
     {
-        private OrderDatabase orderDb;
 
-        public OrderStatusService(OrderDatabase orderDatabase)
-        {
-            orderDb = orderDatabase;
-        }
 
-        public async Task CreateOrderInfoAsync()
+        public async Task CreateOrderInfoAsync(OrderDatabase orderDb)
         {
             var ordersToSend = await orderDb.OrderTransmitStatus.GetAllAsync(order => order.TransmitStatus == TransmitStatus.Received || order.TransmitStatus == TransmitStatus.Unknown);
             OrderStatusMessage orderMsg;
@@ -90,7 +85,7 @@ namespace Alivery.MessageService
 
         }
 
-        public async Task<List<(OrderTransmitStatus transmitStatus, OrderStatusMessage msg)>> GetOrderInfoAsync()
+        public async Task<List<(OrderTransmitStatus transmitStatus, OrderStatusMessage msg)>> GetOrderInfoAsync(OrderDatabase orderDb)
         {
             var ordersToSend = await orderDb.OrderTransmitStatus.GetAllAsync(order => order.TransmitStatus == TransmitStatus.ReadyToSend);
 

@@ -2,7 +2,7 @@
 using SqlBase;
 using SQLite;
 
-namespace DbConfiguration.Models
+namespace Utils.Models
 {
     public class ConfigurationModel : IValueObject
     {

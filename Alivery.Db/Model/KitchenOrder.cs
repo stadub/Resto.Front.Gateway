@@ -11,13 +11,6 @@ namespace Alivery.Db.Model
 
         [Indexed]
         public string Json { get; set; }
-        public int Status { get; set; }
-
-        [Indexed]
-        public int Revision { get; set; }
-        public DateTime OpenTime { get; set; }
-        public DateTime? CloseTime { get; set; }
-
 
         public int Number { get; set; }
 

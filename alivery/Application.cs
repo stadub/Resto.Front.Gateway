@@ -10,7 +10,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Alivery.Db;
 using Alivery.Db.Model;
-using DbConfiguration;
+using Utils;
 using Resto.Front.Api;
 using Resto.Front.Api.Data.Common;
 using Newtonsoft.Json;
@@ -22,9 +22,7 @@ namespace alivery
 {
     public class Application:IDisposable
     {
-
-       
-        private OrderDatabase orderDb;
+        
         ConfigDatabase configDb;
         ConfigRegistry config;
 
@@ -33,7 +31,7 @@ namespace alivery
         public Application()
         {
             configDb = new ConfigDatabase("appService.cfg","суперсекретный пароль1");
-            configDb.Open();
+            configDb.OpenAsync().Wait();
 
             config = new ConfigRegistry(configDb.Configuration);
 
@@ -42,7 +40,7 @@ namespace alivery
 
             config.SyncFromConfigFile(file.Location);
 
-            orderDb = new OrderDatabase(config.Application.OrderDbPath);
+           
 
             resources.Add(Disposable.Create(Dispose));
         }
@@ -64,7 +62,17 @@ namespace alivery
             //restart messaging service in case of error
             while (!disposed)
             {
-                StartMessageService();
+                try
+                {
+                    StartMessageService();
+
+                }
+                catch (Exception e)
+                {
+                    PluginContext.Log.Error(e.ToString(),e);
+                }
+
+                Thread.Sleep(1000);
             }
 
 
@@ -82,28 +90,66 @@ namespace alivery
 
             process.StartInfo.FileName = path;
             process.StartInfo.Arguments = "-n";
-            //process.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
+            process.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
+            process.StartInfo.UseShellExecute = false;
+            process.StartInfo.RedirectStandardOutput = true;
+            process.StartInfo.RedirectStandardError = true;
+
+            process.OutputDataReceived += (sender, args) =>
+            {
+                PluginContext.Log.Info(args.Data);
+            };
+
+            process.ErrorDataReceived += (sender, args) =>
+            {
+                PluginContext.Log.Error(args.Data);
+            };
+            
             process.Start();
+
             process.WaitForExit();// Waits here for the process to exit.
         }
+
+
+
 
         private async Task EntryPoint()
         {
             PluginContext.Log.Info("Start init...");
 
 
-            orderDb.Open();
-
             await UpdateOrderStatus();
 
             // NOTE: performance warning
             // Do not reload all orders every time in a real production code, only replace single changed order.
             resources.Add(PluginContext.Notifications.OrderChanged
-                .Subscribe((x)=>ReceiveOrderUpdate(x).Wait()));
+                .Subscribe((x)=>
+                {
+                    try
+                    {
+                        ReceiveOrderUpdate(x).Wait();
+                    }
+                    catch (Exception e)
+                    {
+                        PluginContext.Log.Error(e.ToString(), e);
+                    }
+                    
+                }));
 
 
             resources.Add(PluginContext.Notifications.KitchenOrderChanged
-                .Subscribe((x) => ReceiveKitchenOrderUpdate(x).Wait()));
+                .Subscribe((x) =>
+                {
+                    try
+                    {
+                        ReceiveKitchenOrderUpdate(x).Wait();
+                    }
+                    catch (Exception e)
+                    {
+                        PluginContext.Log.Error(e.ToString(), e);
+                    }
+                    
+                }));
 
             while (true)
             {
@@ -111,25 +157,60 @@ namespace alivery
                 if (disposed)
                     break;
 
-
-                await UpdateOrderStatus();
+                try
+                {
+                    await UpdateOrderStatus();
+                    await UpdateKOrderStatus();
+                }
+                catch (Exception e)
+                {
+                    PluginContext.Log.Error(e.ToString(),e);
+                }
+               
             }
             PluginContext.Log.Info("Exit...");
 
         }
-
+        
         public async Task UpdateOrderStatus()
         {
             var orders = PluginContext.Operations.GetOrders();
 
+            var orderDb = new OrderDatabase(config.Application.OrderDbPath);
+
+            //await
+                using var conn = await orderDb.OpenAsync();
+
             foreach (IOrder order in orders)
             {
                 var oderId = order.Id.ToString();
-                var orderTransactions = await orderDb.Order.GetAllAsync(x => x.IikoOrderId == oderId);
 
-                if(orderTransactions.Any(x =>x.Revision == order.Revision ))
+                
+                var orderTransactions = await orderDb.Order.GetAllAsync(x => x.IikoOrderId == oderId);
+                if (orderTransactions.Any(x => x.Revision == order.Revision))
                     continue;
-                await StoreOrder(order);
+
+
+                await StoreOrder(order, orderDb);
+            }
+        }
+
+
+        public async Task UpdateKOrderStatus()
+        {
+            var kOrders = PluginContext.Operations.GetKitchenOrders();
+
+            var orderDb = new OrderDatabase(config.Application.OrderDbPath);
+
+            //await
+                using var conn = await orderDb.OpenAsync();
+
+            foreach (var korder in kOrders)
+            {
+                var oderId = korder.Id.ToString();
+
+
+                await StoreKitchenOrder(korder, orderDb);
             }
         }
 
@@ -147,8 +228,11 @@ namespace alivery
                     break;
             }
 
-            await StoreOrder(order);
+            var orderDb = new OrderDatabase(config.Application.OrderDbPath);
 
+            //await 
+                using var conn = await orderDb.OpenAsync();
+            await StoreOrder(order, orderDb);
         }
         private async Task ReceiveKitchenOrderUpdate(EntityChangedEventArgs<IKitchenOrder> statusUpdate)
         {
@@ -164,10 +248,14 @@ namespace alivery
                     break;
             }
 
-            await StoreKitchenOrder(order);
+            var orderDb = new OrderDatabase(config.Application.OrderDbPath);
+
+            //await 
+                using var conn = await orderDb.OpenAsync();
+            await StoreKitchenOrder(order, orderDb);
         }
 
-        private async Task StoreKitchenOrder(IKitchenOrder order)
+        private async Task StoreKitchenOrder(IKitchenOrder order, OrderDatabase orderDb)
         {
             var oderId = order.Id.ToString();
 
@@ -176,21 +264,25 @@ namespace alivery
             var orderModel = new KitchenOrder
             {
                 CookingPriority = order.CookingPriority,
-                Number = (int)order.Number,
+                Number = (int) order.Number,
                 BaseOrderId = order.BaseOrderId.ToString(),
-                Json = jsonString
+                Json = jsonString,
+                IikoOrderId = oderId,
             };
+
+
             await orderDb.KitchenOrder.AddAsync(orderModel);
 
             await orderDb.KitchenOrderTransmitStatus.AddAsync(new KitchenOrderTransmitStatus
             {
                 Created = DateTime.Now,
                 TransmitStatus = TransmitStatus.Received,
-                KitchenOrderId = orderModel.Id
+                KitchenOrderId = orderModel.Id,
             });
         }
 
-        private async Task StoreOrder(IOrder order)
+
+        private async Task StoreOrder(IOrder order, OrderDatabase orderDb)
         {
             var oderId = order.Id.ToString();
 
@@ -205,6 +297,7 @@ namespace alivery
                 OrderStatus = (OrderStatus) order.Status,
                 Json = jsonString
             };
+
             await orderDb.Order.AddAsync(orderModel);
 
             await orderDb.OrderTransmitStatus.AddAsync(new OrderTransmitStatus
@@ -223,7 +316,6 @@ namespace alivery
             if (disposed)
                 return;
             //configDb.Close();
-            orderDb.Close();
             disposed = true;
         }
     }

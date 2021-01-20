@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
 using SqlBase;
@@ -15,7 +16,10 @@ namespace SqliteDatabase
         {
             this.db = database;
 
-            await db.CreateTableAsync<T>();
+            var info = await db.GetTableInfoAsync(typeof(T).Name);
+
+            if (!info.Any())
+              await db.CreateTableAsync<T>();
 
         }
 

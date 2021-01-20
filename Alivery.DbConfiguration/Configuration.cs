@@ -1,6 +1,6 @@
 ﻿using System;
-using DbConfiguration;
-using DbConfiguration.Models;
+using Utils;
+using Utils.Models;
 using SqlBase;
 
 namespace alivery

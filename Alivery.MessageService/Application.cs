@@ -1,72 +1,60 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using alivery;
 using Alivery.Db;
-using DbConfiguration;
+using Utils;
 using Microsoft.Extensions.Logging;
 
 namespace Alivery.MessageService
 {
     public class Application:IDisposable
     {
+        private readonly ConfigRegistry config;
         private readonly ILogger logger;
 
-        private ConfigDatabase configDb;
-        private OrderDatabase orderDb;
         MessageQueue messageQueue;
 
 
-        public Application(ILogger logger)
+        public Application(ConfigRegistry config, ILogger logger)
         {
+            this.config = config;
             this.logger = logger;
-
-            configDb = new ConfigDatabase("суперсекретный пароль");
-            configDb.Open();
-
-            var config = new ConfigRegistry(configDb.Configuration);
-            //var config = new ConfigRegistry("msgService.cfg","суперсекретный пароль2");
-
-            var file = Assembly.GetExecutingAssembly();
-            config.SyncFromConfigFile(file.Location);
-            config.OnFirstRun();
-
-            orderDb = new OrderDatabase(config.Application.OrderDbPath);
-
-            messageQueue = new MessageQueue(config.OrderMessageQueue, config.KitchenOrderMessageQueue, orderDb);
-
         }
 
 
-        [MethodImpl(MethodImplOptions.Synchronized)]
-        public Application Start()
-        {
-            EntryPoint().Wait();
-            
-            logger.LogInformation("CookingPriorityManager started");
-            return this;
-        }
 
-        private async Task EntryPoint()
+        public async Task EntryPoint()
         {
+            Debugger.Launch();
             logger.LogInformation("Start init...");
 
-
-            orderDb.Open();
-
-
+            messageQueue = new MessageQueue( config,config.OrderMessageQueue, config.KitchenOrderMessageQueue);
 
             while (true)
             {
-                await Task.Delay(1000);
+                await Task.Delay(5000);
                 if (disposed)
                     break;
 
+                try
+                {
+                    var orderDb = new OrderDatabase(config.Application.OrderDbPath);
+                    using (var db = await orderDb.OpenAsync())
+                    {
 
-                await messageQueue.CreateOrderMsg();
+                        await messageQueue.CreateOrderMsg(orderDb);
 
-                await messageQueue.SendStatusUpdatesAsync();
+                        await messageQueue.SendStatusUpdatesAsync(orderDb);
+                    }
+                }
+                catch (Exception e)
+                {
+                    logger.LogError(e,"error from Message service");
+                }
+                
 
             }
             logger.LogInformation("Exit...");
@@ -82,8 +70,7 @@ namespace Alivery.MessageService
         {
             if (disposed)
                 return;
-            configDb.Close();
-            orderDb.Close();
+            
             messageQueue.Dispose();
             disposed = true;
         }

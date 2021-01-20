@@ -1,15 +1,17 @@
-﻿using DbConfiguration.Models;
+﻿using System.Runtime.InteropServices;
 using SqlBase;
+using Utils.Models;
 
-namespace DbConfiguration
+namespace Utils
 {
+    [Guid("237c89ab-d689-41c6-b745-10d0926ead99")]
     public class ConfigDatabase: SqliteDatabase.SqliteDatabase
     {
-        public ConfigDatabase(string pass) : this( pass, "config.db")
+        public ConfigDatabase(string pass) : this( "config.db" ,pass)
         {
         }
 
-        public ConfigDatabase(string pass, string name) : base(name, pass)
+        public ConfigDatabase(string name, string pass) : base(name, pass)
         {
             Configuration = RegisterTable<ConfigurationModel>();
 
